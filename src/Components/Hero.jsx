@@ -29,12 +29,12 @@ const Hero = () => {
             You've been sent a payment request. Use your preferred method to complete your transaction safely in seconds.
           </p>
 
-          <button
+          {/* <button
             className="bg-amber-400 hover:bg-amber-500 hover:text-white text-black font-semibold py-3 px-6 rounded-md transition duration-300"
             onClick={() => handleScroll('payment')}
           >
             Pay Now
-          </button>
+          </button> */}
         </div>
       </div>
     </section>

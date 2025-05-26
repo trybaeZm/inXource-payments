@@ -3,11 +3,15 @@ import Swal from 'sweetalert2';
 import PaymentService from '../api/payment';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const products = [
-  { id: 1, name: 'Diesel', price: 18 },
-  { id: 2, name: 'Petrol', price: 20 },
-  { id: 3, name: 'Engine Oil', price: 150 }
-];
+const spinnerStyle = {
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  height: '100vh',
+  color: '#00b4d8',
+  fontSize: '1.2rem'
+};
+
 
 const ProductSelectionForm = () => {
   const location = useLocation();
@@ -23,6 +27,7 @@ const ProductSelectionForm = () => {
         const res = await PaymentService.getProductInfoByBusiness(company.business_id)
         setCompanyProducts(res);
       } catch (error) {
+        Swal.fire('An Error Occured', error.message, 'error')
         console.error('Error fetching company info:', error.message);
       } finally {
         setLoading(false);
@@ -53,15 +58,37 @@ const ProductSelectionForm = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     let userDetails = location.state?.res;
 
     const selectedProduct = companyProducts?.find(p => p.id.toString() === formData.productId);
     if (!selectedProduct) {
       Swal.fire('Error', 'Please select a product', 'error');
+      setLoading(false);
       return;
     }
+
+    let response;
+    try {
+      response = await PaymentService.createTransaction();
+    } catch (error) {
+      Swal.fire('Error', error.message, 'error');
+      setLoading(false);
+      return;
+    }
+
+    const payload = {
+      totalPrice: totalPrice,
+      userDetails: userDetails,
+      token: response.token,
+      product: selectedProduct,
+      formData: formData
+    };
+
+    setLoading(false);
 
     Swal.fire({
       title: 'Confirm Order',
@@ -75,23 +102,35 @@ const ProductSelectionForm = () => {
       allowOutsideClick: () => !Swal.isLoading(),
       preConfirm: async () => {
         try {
-          await PaymentService.processPayment(totalPrice, userDetails);
+          await PaymentService.processPayment(payload);
         } catch (error) {
           Swal.showValidationMessage(`Payment failed: ${error.message}`);
         }
       }
     }).then((result) => {
       if (result.isConfirmed) {
-        // Swal.fire('Success', 'Your order is being processed! You will recieve a confirmation sms soon', 'success');
         navigation('/');
       }
     });
-
   };
+
+  if (!companyProducts) {
+    return <div style={spinnerStyle}>Loading products...</div>;
+  }
+
 
   return (
     <div style={styles.body}>
       <div style={styles.formContainer}>
+        {company && (
+          <div className="mt-4 flex justify-center">
+            <img
+              src={company.logo_url ? company.logo_url : 'https://imageplaceholder.net/600x400/eeeeee/131313?text=Your+logo'}
+              alt="Business Logo"
+              className="h-28 w-28 rounded-full border border-gray-300 object-cover mb-5"
+            />
+          </div>
+        )}
         <h2 style={styles.heading}>Select Product</h2>
         <form onSubmit={handleSubmit}>
           <label style={styles.label} htmlFor="productId">Product</label>
@@ -138,7 +177,23 @@ const ProductSelectionForm = () => {
             Total Price: <strong>ZMW {totalPrice.toFixed(2)}</strong>
           </p>
 
-          <button type="submit" style={styles.button}>Place Order</button>
+          <button
+            type="submit"
+            style={{
+              ...styles.button,
+              ...(loading ? styles.buttonDisabled : {}),
+            }}
+            onMouseOver={(e) => {
+              if (!loading) e.currentTarget.style.backgroundColor = styles.buttonHover.backgroundColor;
+            }}
+            onMouseOut={(e) => {
+              if (!loading) e.currentTarget.style.backgroundColor = styles.button.backgroundColor;
+            }}
+            disabled={loading}
+          >
+            {loading ? 'Placing order...' : 'Place Order'}
+          </button>
+
         </form>
       </div>
     </div>
@@ -196,6 +251,14 @@ const styles = {
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'background-color 0.3s ease'
+  },
+  buttonHover: {
+    backgroundColor: '#009ac1'
+  },
+  buttonDisabled: {
+    backgroundColor: '#80d0e3',
+    cursor: 'not-allowed',
+    opacity: 0.7
   }
 };
 

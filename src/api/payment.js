@@ -2,9 +2,7 @@ import axios from "axios";
 import { supabase } from "../services/supabaseClient";
 import Swal from "sweetalert2";
 
-const url = "https://tumeny.herokuapp.com/api";
-const apiKey = "62c5d037-a215-4a2b-ad58-2802b9048d40";
-const apiSecret = "fe69a5b014186217320996ebbf4f4a02734536e2";
+const paymentUrl = "http://localhost:4455/api/payment";
 
 class Payment {
   async addCustomer(customer) {
@@ -87,54 +85,74 @@ class Payment {
     return data;
   }
 
-  async createTransaction() {
-    const apiUrl = "http://localhost:4455/api/payment/getToken";
+  async saveOrder(payload) {
+    const body = {
+      business_id: payload.userDetails.business_id,
+      int_business_id: payload.userDetails.int_business_id,
+      customer_id: payload.userDetails.id,
+      int_customer_id: payload.userDetails.customer_id,
+      total_amount: payload.totalPrice,
+      order_status: "pending",
+      delivery_location: payload?.formData.location || null
+    };
 
     try {
+      const { data, error } = await supabase
+        .from("orders")
+        .insert(body)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating order:", error.message);
+        return null;
+      }
+
+      return data;
+    } catch (err) {
+      console.error("Unexpected error creating order:", err);
+      return null;
+    }
+  }
+
+  async createTransaction() {
+    const apiUrl = paymentUrl + "/getToken";
+
+    // try {
       const response = await fetch(apiUrl, {
         method: "POST",
       });
 
       const result = await response.json();
-      console.log(result);
       return result;
-    } catch (error) {
-      Swal.fire("error", error.message, "error");
-    }
+    // } catch (error) {
+    //   Swal.fire("error", error.message, "error");
+    // }
   }
 
-  async processPayment(body, payload) {
-    const res = await this.createTransaction();
-    if (!res || !res.token) {
-      Swal.fire({
-        title: "Error",
-        text: "Token generation failed.",
-        icon: "error",
-      });
-      return;
-    }
-
-    console.log("payload:", payload)
-
-    const [firstName = "", ...rest] = (payload.name || "").split(" ");
+  async processPayment(payload) {
+    console.log(payload);
+    const [firstName = "", ...rest] = (payload?.userDetails.name || "").split(
+      " "
+    );
     const lastName = rest.join(" ");
 
     const preparedPayload = {
       description: "test payment",
       customerFirstName: firstName,
       customerLastName: lastName,
-      email: payload.email,
-      phoneNumber: payload.phone,
-      amount: body,
+      email: payload?.userDetails.email,
+      phoneNumber: payload?.userDetails.phone,
+      amount: payload.totalPrice,
     };
 
     try {
       const response = await fetch(
-        "http://localhost:4455/api/payment/initiatePayment",
+        paymentUrl + "/initiatePayment",
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${res.token}`,
+            Authorization: `Bearer ${payload.token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(preparedPayload),
@@ -143,10 +161,11 @@ class Payment {
 
       const result = await response.json();
 
-      if(result.paymentStatus && result.paymentStatus.status === 'success'){
-        Swal.fire('Success', 'Your order is been processed!', 'success');
+      if (result.paymentStatus && result.paymentStatus.status === "success") {
+        await this.saveOrder(payload);
+        Swal.fire("Success", "Your order is been processed!", "success");
       } else {
-        Swal.fire('Error', 'Your order was unsuccessfull!', 'error');
+        Swal.fire("Error", "Your order was unsuccessfull!", "error");
         return result;
       }
     } catch (error) {
@@ -156,14 +175,6 @@ class Payment {
         icon: "error",
       });
     }
-  }
-
-  async initiatePayment(body) {
-    const res = await axios.post(
-      "http://localhost:4455/api/payment/initiate",
-      body
-    );
-    return res;
   }
 }
 

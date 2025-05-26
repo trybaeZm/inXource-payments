@@ -31,8 +31,7 @@ const CustomerInfoForm = () => {
     try {
       const response = await PaymentService.addCustomer(formData);
       const res = response[0];
-  
-      console.log(res)
+
       if (res) {
         navigation('/payment/product', { state: { res } })
       } 
@@ -119,7 +118,7 @@ const CustomerInfoForm = () => {
             ))}
           </select>
 
-          <button type="submit" style={styles.button}>Proceed to Payment</button>
+          <button type="submit" style={styles.button} disabled={loading}>{loading ? 'loading' : "Proceed to Payment"}</button>
         </form>
       </div>
     </div>
@@ -145,6 +144,7 @@ const styles = {
     fontFamily: 'Arial, sans-serif',
     height: '100vh',
     margin: 0,
+    padding: '2rem 0',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center'
