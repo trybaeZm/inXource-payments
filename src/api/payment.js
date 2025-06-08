@@ -1,5 +1,4 @@
-import axios from "axios";
-import { supabase } from "../services/supabaseClient";
+import {supabase} from "../services/supabaseClient";
 import Swal from "sweetalert2";
 
 const paymentUrl = "http://localhost:4455/api/payment";
@@ -97,41 +96,67 @@ class Payment {
     };
 
     try {
-      const { data, error } = await supabase
-        .from("orders")
-        .insert(body)
-        .select()
-        .single();
+      const { data: orderData, error: orderError } = await supabase
+          .from("orders")
+          .insert(body)
+          .select()
+          .single();
 
-      if (error) {
-        console.error("Error creating order:", error.message);
+      if (orderError) {
+        console.error("Error creating order:", orderError.message);
         return null;
       }
 
-      return data;
+      const orderId = orderData.id;
+
+      if (Array.isArray(payload.items) && payload.items.length > 0) {
+        const orderItems = payload.items.map(item => ({
+          order_id: orderId,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: item.price
+        }));
+
+        const { error: itemsError } = await supabase
+            .from("order_items")
+            .insert(orderItems);
+
+        if (itemsError) {
+          console.error("Error saving order items:", itemsError.message);
+
+          const { error: deleteError } = await supabase
+              .from("orders")
+              .delete()
+              .eq("id", orderId);
+
+          if (deleteError) {
+            console.error("Rollback failed! Could not delete order:", deleteError.message);
+          } else {
+            console.warn("Order rolled back due to item insert failure.");
+          }
+
+          throw itemsError;
+        }
+      }
+
+      return orderData;
+
     } catch (err) {
-      console.error("Unexpected error creating order:", err);
+      console.error("Unexpected error creating order:", err.message || err);
       return null;
     }
   }
 
   async createTransaction() {
     const apiUrl = paymentUrl + "/getToken";
-
-    // try {
       const response = await fetch(apiUrl, {
         method: "POST",
       });
 
-      const result = await response.json();
-      return result;
-    // } catch (error) {
-    //   Swal.fire("error", error.message, "error");
-    // }
+    return await response.json();
   }
 
   async processPayment(payload) {
-    console.log(payload);
     const [firstName = "", ...rest] = (payload?.userDetails.name || "").split(
       " "
     );
