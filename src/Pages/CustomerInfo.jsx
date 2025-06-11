@@ -13,8 +13,7 @@ const CustomerInfoForm = () => {
     gender: '',
     location: '',
     phone: location.state?.phone,
-    business_id: location.state?.id,
-    int_business_id: location.state?.business_id,
+    business_id: location.state?.id
   });
 
   const handleChange = (e) => {
@@ -142,9 +141,9 @@ const styles = {
     backgroundColor: '#0d1b2a',
     color: '#ffffff',
     fontFamily: 'Arial, sans-serif',
-    height: '100vh',
+    minHeight: '100vh',
     margin: 0,
-    padding: '2rem 0',
+    padding: '10px',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center'
@@ -153,7 +152,6 @@ const styles = {
     backgroundColor: '#1b263b',
     padding: '30px',
     borderRadius: '12px',
-    boxShadow: '0 0 15px rgba(0, 255, 255, 0.2)',
     width: '100%',
     maxWidth: '400px'
   },

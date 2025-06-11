@@ -12,7 +12,6 @@ const spinnerStyle = {
   fontSize: '1.2rem'
 };
 
-
 const ProductSelectionForm = () => {
   const location = useLocation();
   const navigation = useNavigate();

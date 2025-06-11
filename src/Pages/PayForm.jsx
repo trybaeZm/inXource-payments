@@ -12,24 +12,56 @@ const PhoneVerification = () => {
 
   const { alias } = useParams();
 
-  useEffect(() => {
-    const fetchCompanyInfo = async () => {
-      try {
-        const info = await PaymentService.getCompanyInfo(alias);
 
-        if (!info) {
-          Swal.fire('error', 'Error fetching company details.', 'error');
-          navigation('/')
+
+
+  const fetchCompanyInfo = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/dycryptToken', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: alias
+        }),
+      });
+
+      const data = await response.json();
+
+      // console.log(data);
+
+      if (data) {
+        try {
+          const businessResponse = await fetch(`http://localhost:3000/api/fetchCompany`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              business_id: data.id,
+            }),
+          });
+
+          if (!businessResponse.ok) {
+            throw new Error(`HTTP error! status: ${businessResponse.status}`);
+          }
+
+          const businessData = await businessResponse.json();
+          // console.log('Business Data:', businessData);
+          sessionStorage.setItem('companyInfo', JSON.stringify(businessData.data));
+          setCompanyInfo(businessData.data);
+        } catch (error) {
+          console.error('Failed to fetch business data:', error);
         }
-
-        sessionStorage.setItem('companyInfo', JSON.stringify(info))
-        setCompanyInfo(info);
-      } catch (error) {
-        console.error('Error fetching company info:', error.message);
-      } finally {
-        setLoading(false);
       }
-    };
+
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  useEffect(() => {
 
     if (alias) fetchCompanyInfo();
   }, [alias]);
@@ -46,7 +78,7 @@ const PhoneVerification = () => {
     setLoading(true);
 
     try {
-      const res = await PaymentService.getCustomerByPhoneAndBusiness(phone, companyInfo.business_id);
+      const res = await PaymentService.getCustomerByPhoneAndBusiness(phone, companyInfo.id);
 
       if (res) {
         navigation('/payment/product', { state: { res } });
@@ -54,8 +86,7 @@ const PhoneVerification = () => {
         navigation('/payment/info', {
           state: {
             phone: phone,
-            business_id: companyInfo.business_id,
-            id: companyInfo.id,
+            business_id: companyInfo.id
           },
         });
       }

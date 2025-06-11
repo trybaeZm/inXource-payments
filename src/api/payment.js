@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 const paymentUrl = "http://localhost:4455/api/payment";
 
 class Payment {
+
   async addCustomer(customer) {
     const {
       business_id,
@@ -12,8 +13,7 @@ class Payment {
       email,
       phone,
       location,
-      gender,
-      int_business_id,
+      gender
     } = customer;
 
     const { data, error } = await supabase
@@ -25,7 +25,6 @@ class Payment {
           phone,
           location,
           gender,
-          int_business_id,
           business_id,
         },
       ])
@@ -41,6 +40,7 @@ class Payment {
 
   async getCompanyInfo(alias) {
     console.log(alias);
+
     const { data, error } = await supabase
       .from("businesses")
       .select("*")
@@ -51,6 +51,7 @@ class Payment {
       console.log(error);
       Swal.fire("error", error.message, "error");
     }
+
     return data;
   }
 
@@ -70,19 +71,30 @@ class Payment {
   }
 
   async getCustomerByPhoneAndBusiness(phone, intBusinessId) {
-    const { data, error } = await supabase
-      .from("customers")
-      .select("*")
-      .eq("phone", phone)
-      .eq("int_business_id", intBusinessId)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("phone", phone)
+        .eq("business_id", intBusinessId)
+        .maybeSingle();
 
-    if (error) {
-      console.error("Error fetching customer:", error.message);
-      return null;
+      if (data) {
+        console.log("Customer data:", data);
+      } else {
+        console.log("No customer found with the provided phone and business ID.");
+      }
+
+      if (error) {
+        console.error("Error fetching customer:", error.message);
+        return null;
+      }
+
+      return data;
+
+    } catch (error) {
+      console.error("Error in getCustomerByPhoneAndBusiness:", error);
     }
-
-    return data;
   }
 
   async saveOrder(payload) {
@@ -119,12 +131,12 @@ class Payment {
     const apiUrl = paymentUrl + "/getToken";
 
     // try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-      });
+    const response = await fetch(apiUrl, {
+      method: "POST",
+    });
 
-      const result = await response.json();
-      return result;
+    const result = await response.json();
+    return result;
     // } catch (error) {
     //   Swal.fire("error", error.message, "error");
     // }
