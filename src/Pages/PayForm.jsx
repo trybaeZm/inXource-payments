@@ -98,22 +98,30 @@ const PhoneVerification = () => {
   };
 
   return (
-    <div style={styles.body}>
-      <div style={styles.formContainer}>
+    <div className="font-sans bg-gray-800 flex justify-center items-center h-screen m-0">
+      <div className="bg-gray-700 text-white p-8 rounded-xl shadow-md max-w-md w-full">
         {companyInfo && (
           <div className="mt-4 mb-2 flex justify-center flex-col items-center">
             <img
-              src={companyInfo.logo_url ? companyInfo.logo_url : 'https://imageplaceholder.net/600x400/eeeeee/131313?text=Your+logo'}
+              src={
+                companyInfo.logo_url
+                  ? companyInfo.logo_url
+                  : 'https://imageplaceholder.net/600x400/eeeeee/131313?text=Your+logo'
+              }
               alt="Business Logo"
               className="h-28 w-28 rounded-full border border-gray-300 object-cover"
             />
-            <h2>{companyInfo.business_name}</h2>
+            <h2 className="mt-2 text-lg font-semibold">{companyInfo.business_name}</h2>
           </div>
         )}
-        <h2 style={styles.heading}>Enter Your Phone Number</h2>
-        <form onSubmit={handleSubmit}>
-          <div style={styles.formGroup}>
-            <label htmlFor="phone" style={styles.label}>Phone Number</label>
+        <h2 className="mb-4 text-xl text-center font-semibold">
+          Enter Your Phone Number
+        </h2>
+        <form className='' onSubmit={handleSubmit}>
+          <div className="mb-5">
+            <label htmlFor="phone" className="block text-sm text-gray-200 mb-1">
+              Phone Number
+            </label>
             <input
               type="tel"
               id="phone"
@@ -122,75 +130,25 @@ const PhoneVerification = () => {
               onChange={(e) => setPhone(e.target.value)}
               placeholder="e.g. 0977123456"
               required
-              style={styles.input}
+              className="w-full px-4 py-3 border border-gray-300 text-black rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
-          <button type="submit" style={styles.button} disabled={loading}>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-blue-600 text-white rounded-lg text-base hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50"
+          >
             {loading ? 'Checking...' : 'Next'}
           </button>
         </form>
-        <div style={styles.note}>We’ll check if you’ve shopped with us before.</div>
+        <div className="text-sm text-gray-500 mt-4 text-center">
+          We’ll check if you’ve shopped with us before.
+        </div>
       </div>
     </div>
   );
 };
 
-const styles = {
-  body: {
-    fontFamily: `'Segoe UI', Tahoma, Geneva, Verdana, sans-serif`,
-    backgroundColor: '#f9f9f9',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    margin: 0
-  },
-  formContainer: {
-    backgroundColor: '#fff',
-    padding: '30px 40px',
-    borderRadius: '12px',
-    boxShadow: '0 0 20px rgba(0,0,0,0.1)',
-    maxWidth: '400px',
-    width: '100%'
-  },
-  heading: {
-    marginBottom: '15px',
-    fontSize: '22px',
-    color: '#333',
-    textAlign: 'center'
-  },
-  formGroup: {
-    marginBottom: '20px'
-  },
-  label: {
-    display: 'block',
-    fontSize: '14px',
-    color: '#555',
-    marginBottom: '5px'
-  },
-  input: {
-    width: '100%',
-    padding: '12px',
-    border: '1px solid #ccc',
-    borderRadius: '8px',
-    fontSize: '16px'
-  },
-  button: {
-    width: '100%',
-    padding: '12px',
-    backgroundColor: '#3081f7',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '16px',
-    cursor: 'pointer'
-  },
-  note: {
-    fontSize: '13px',
-    color: '#777',
-    marginTop: '10px',
-    textAlign: 'center'
-  }
-};
+
 
 export default PhoneVerification;

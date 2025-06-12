@@ -108,157 +108,98 @@ const ProductSelectionForm = () => {
       }
     }).then((result) => {
       if (result.isConfirmed) {
-        navigation('/');
+        // navigation('/');
       }
     });
   };
-
+  
   if (!companyProducts) {
     return <div style={spinnerStyle}>Loading products...</div>;
   }
 
 
   return (
-    <div style={styles.body}>
-      <div style={styles.formContainer}>
+    <div className="bg-gray-800 text-white font-sans h-screen m-0 flex justify-center items-center">
+      <div className="bg-gray-700 p-8 rounded-xl shadow-md w-full max-w-md">
         {company && (
           <div className="mt-4 flex justify-center">
             <img
-              src={company.logo_url ? company.logo_url : 'https://imageplaceholder.net/600x400/eeeeee/131313?text=Your+logo'}
+              src={
+                company.logo_url
+                  ? company.logo_url
+                  : 'https://imageplaceholder.net/600x400/eeeeee/131313?text=Your+logo'
+              }
               alt="Business Logo"
               className="h-28 w-28 rounded-full border border-gray-300 object-cover mb-5"
             />
           </div>
         )}
-        <h2 style={styles.heading}>Select Product</h2>
+        <h2 className="text-center text-[#00b4d8] mb-5 text-xl font-semibold">Select Product</h2>
         <form onSubmit={handleSubmit}>
-          <label style={styles.label} htmlFor="productId">Product</label>
+          <label htmlFor="productId" className="block mt-4 mb-1 font-bold text-[#e0f7fa]">
+            Product
+          </label>
           <select
-            style={styles.input}
-            name="productId"
             id="productId"
+            name="productId"
             value={formData.productId}
             onChange={handleChange}
             required
+            className="w-full px-3 py-2 rounded-md bg-[#415a77] text-white text-base focus:outline-none"
           >
             <option value="">-- Select a Product --</option>
-            {companyProducts && companyProducts.map(product => (
-              <option key={product.id} value={product.id}>
-                {product.name} - ZMW {product.price}
-              </option>
-            ))}
+            {companyProducts &&
+              companyProducts.map((product) => (
+                <option key={product.id} value={product.id}>
+                  {product.name} - ZMW {product.price}
+                </option>
+              ))}
           </select>
 
-          <label style={styles.label} htmlFor="quantity">Quantity</label>
+          <label htmlFor="quantity" className="block mt-4 mb-1 font-bold text-[#e0f7fa]">
+            Quantity
+          </label>
           <input
-            style={styles.input}
             type="number"
-            name="quantity"
             id="quantity"
+            name="quantity"
             value={formData.quantity}
             onChange={handleChange}
             min="1"
             required
+            className="w-full px-3 py-2 rounded-md bg-[#415a77] text-white text-base focus:outline-none"
           />
 
-          <label style={styles.label} htmlFor="quantity">Delivery Location (optional)</label>
+          <label htmlFor="location" className="block mt-4 mb-1 font-bold text-[#e0f7fa]">
+            Delivery Location (optional)
+          </label>
           <input
-            style={styles.input}
             type="text"
-            name="location"
             id="location"
+            name="location"
             value={formData.location}
             onChange={handleChange}
-            min="1"
+            className="w-full px-3 py-2 rounded-md bg-[#415a77] text-white text-base focus:outline-none"
           />
 
-          <p style={{ color: '#90e0ef', marginTop: '10px' }}>
+          <p className="text-[#90e0ef] mt-3">
             Total Price: <strong>ZMW {totalPrice.toFixed(2)}</strong>
           </p>
 
           <button
             type="submit"
-            style={{
-              ...styles.button,
-              ...(loading ? styles.buttonDisabled : {}),
-            }}
-            onMouseOver={(e) => {
-              if (!loading) e.currentTarget.style.backgroundColor = styles.buttonHover.backgroundColor;
-            }}
-            onMouseOut={(e) => {
-              if (!loading) e.currentTarget.style.backgroundColor = styles.button.backgroundColor;
-            }}
             disabled={loading}
+            className={`mt-5 w-full py-3 rounded-md font-bold transition-colors duration-300 ${loading
+                ? 'bg-[#80d0e3] text-[#0d1b2a] opacity-70 cursor-not-allowed'
+                : 'bg-[#00b4d8] text-[#0d1b2a] hover:bg-[#009ac1] cursor-pointer'
+              }`}
           >
             {loading ? 'Placing order...' : 'Place Order'}
           </button>
-
         </form>
       </div>
     </div>
   );
-};
-
-const styles = {
-  body: {
-    backgroundColor: '#0d1b2a',
-    color: '#ffffff',
-    fontFamily: 'Arial, sans-serif',
-    height: '100vh',
-    margin: 0,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  formContainer: {
-    backgroundColor: '#1b263b',
-    padding: '30px',
-    borderRadius: '12px',
-    boxShadow: '0 0 15px rgba(0, 255, 255, 0.2)',
-    width: '100%',
-    maxWidth: '400px'
-  },
-  heading: {
-    textAlign: 'center',
-    color: '#00b4d8',
-    marginBottom: '20px'
-  },
-  label: {
-    display: 'block',
-    marginTop: '15px',
-    marginBottom: '5px',
-    fontWeight: 'bold',
-    color: '#e0f7fa'
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    border: 'none',
-    borderRadius: '6px',
-    backgroundColor: '#415a77',
-    color: '#ffffff',
-    fontSize: '1rem'
-  },
-  button: {
-    marginTop: '20px',
-    width: '100%',
-    padding: '12px',
-    backgroundColor: '#00b4d8',
-    color: '#0d1b2a',
-    border: 'none',
-    borderRadius: '6px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease'
-  },
-  buttonHover: {
-    backgroundColor: '#009ac1'
-  },
-  buttonDisabled: {
-    backgroundColor: '#80d0e3',
-    cursor: 'not-allowed',
-    opacity: 0.7
-  }
 };
 
 export default ProductSelectionForm;

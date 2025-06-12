@@ -1,7 +1,7 @@
 import Swal from 'sweetalert2';
 import React, { useState } from 'react';
 import PaymentService from '../api/payment';
-import { useLocation, useParams, useNavigate  } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 
 const CustomerInfoForm = () => {
   const location = useLocation();
@@ -26,99 +26,119 @@ const CustomerInfoForm = () => {
     setLoading(true);
 
     formData.name = formData.firstName + ' ' + formData.lastName;
-    
+
     try {
       const response = await PaymentService.addCustomer(formData);
       const res = response[0];
 
       if (res) {
         navigation('/payment/product', { state: { res } })
-      } 
+      }
     } catch (error) {
       Swal.fire('error', error.message, 'error');
     } finally {
       setLoading(false);
     }
   };
-  
+
 
   return (
-    <div style={styles.body}>
-      <div style={styles.formContainer}>
-        <h2 style={styles.heading}>Customer Details</h2>
-        <p style={styles.note}>
+    <div className='min-h-screen  py-10 flex flex-col items-center bg-gray-800 text-white'>
+      <div className=' max-w-md'>
+        <div className="text-center text-white text-3xl  font-semibold mb-5">
+          Customer Details
+        </div>
+        <p className="text-center text-white text-sm mb-5">
           Hi there! Since it’s your first time, we just need a few quick details to get to know you better.
           Don’t worry—this is a one-time request, and we won’t ask again.
         </p>
-        <form onSubmit={handleSubmit}>
-          <label style={styles.label} htmlFor="firstName">First Name</label>
-          <input
-            style={styles.input}
-            type="text"
-            id="firstName"
-            name="firstName"
-            placeholder="Enter first name"
-            value={formData.firstName}
-            onChange={handleChange}
-            required
-          />
+      </div>
+      <div className=" w-full flex items-center justify-center p-4">
+        <div className="bg-gray-700 shadow-md p-8 rounded-xl w-full max-w-2xl">
 
-          <label style={styles.label} htmlFor="lastName">Last Name</label>
-          <input
-            style={styles.input}
-            type="text"
-            id="lastName"
-            name="lastName"
-            placeholder="Enter last name"
-            value={formData.lastName}
-            onChange={handleChange}
-            required
-          />
+          <form onSubmit={handleSubmit}>
+            <label className="block mt-4 mb-1 font-semibold text-[#e0f7fa]" htmlFor="firstName">First Name</label>
+            <input
+              className="w-full p-3 rounded-md bg-[#415a77] text-white text-base focus:outline-none"
+              type="text"
+              id="firstName"
+              name="firstName"
+              placeholder="Enter first name"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+            />
 
-          <label style={styles.label} htmlFor="email">Email</label>
-          <input
-            style={styles.input}
-            type="email"
-            id="email"
-            name="email"
-            placeholder="Enter email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
+            <label className="block mt-4 mb-1 font-semibold text-[#e0f7fa]" htmlFor="lastName">Last Name</label>
+            <input
+              className="w-full p-3 rounded-md bg-[#415a77] text-white text-base focus:outline-none"
+              type="text"
+              id="lastName"
+              name="lastName"
+              placeholder="Enter last name"
+              value={formData.lastName}
+              onChange={handleChange}
+              required
+            />
 
-          <label style={styles.label} htmlFor="gender">Gender</label>
-          <select
-            style={styles.input}
-            id="gender"
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            required
-          >
-            <option value="">-- Select Gender --</option>
-            <option value="female">Female</option>
-            <option value="male">Male</option>
-            <option value="other">Other</option>
-          </select>
+            <label className="block mt-4 mb-1 font-semibold text-[#e0f7fa]" htmlFor="email">Email</label>
+            <input
+              className="w-full p-3 rounded-md bg-[#415a77] text-white text-base focus:outline-none"
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Enter email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
 
-          <label style={styles.label} htmlFor="location">Town or Province</label>
-          <select
-            style={styles.input}
-            id="location"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            required
-          >
-            <option value="">-- Select Your Town or Province --</option>
-            {zambianTowns.map((town, index) => (
-              <option key={index} value={town}>{town}</option>
-            ))}
-          </select>
-
-          <button type="submit" style={styles.button} disabled={loading}>{loading ? 'loading' : "Proceed to Payment"}</button>
-        </form>
+            <div className='flex flex-wrap gap-4'>
+              <div className='grow'>
+                <label className="block mt-4 mb-1 font-semibold text-[#e0f7fa]" htmlFor="gender">Gender</label>
+                <select
+                  className="w-full p-3 rounded-md bg-[#415a77] text-white text-base focus:outline-none"
+                  id="gender"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">-- Select Gender --</option>
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className='grow'>
+                <label className="block mt-4 mb-1 font-semibold text-[#e0f7fa]" htmlFor="location">Town or Province</label>
+                <select
+                  className="w-full p-3 rounded-md bg-[#415a77] text-white text-base focus:outline-none"
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">-- Select Your Town or Province --</option>
+                  {zambianTowns.map((town, index) => (
+                    <option key={index} value={town}>{town}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <button
+              type="submit"
+              className={`mt-6 w-full py-3 rounded-md font-bold bg-blue-700 text-white transition duration-300 ${loading
+                ? ' opacity-50 cursor-not-allowed'
+                : ' hover:bg-[#0096c7] cursor-pointer'
+                }`}
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : 'Proceed to Payment'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -136,64 +156,5 @@ const zambianTowns = [
   "Mufulira", "Shangombo", "Mutanda"
 ];
 
-const styles = {
-  body: {
-    backgroundColor: '#0d1b2a',
-    color: '#ffffff',
-    fontFamily: 'Arial, sans-serif',
-    minHeight: '100vh',
-    margin: 0,
-    padding: '10px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  formContainer: {
-    backgroundColor: '#1b263b',
-    padding: '30px',
-    borderRadius: '12px',
-    width: '100%',
-    maxWidth: '400px'
-  },
-  heading: {
-    textAlign: 'center',
-    color: '#00b4d8',
-    marginBottom: '20px'
-  },
-  note: {
-    textAlign: 'center',
-    color: '#90e0ef',
-    fontSize: '0.95rem',
-    marginBottom: '20px'
-  },
-  label: {
-    display: 'block',
-    marginTop: '15px',
-    marginBottom: '5px',
-    fontWeight: 'bold',
-    color: '#e0f7fa'
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    border: 'none',
-    borderRadius: '6px',
-    backgroundColor: '#415a77',
-    color: '#ffffff',
-    fontSize: '1rem'
-  },
-  button: {
-    marginTop: '20px',
-    width: '100%',
-    padding: '12px',
-    backgroundColor: '#00b4d8',
-    color: '#0d1b2a',
-    border: 'none',
-    borderRadius: '6px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease'
-  }
-};
 
 export default CustomerInfoForm;

@@ -169,6 +169,7 @@ class Payment {
   }
 
   async processPayment(payload) {
+    console.log("Processing payment with payload:", payload);
     const [firstName = "", ...rest] = (payload?.userDetails.name || "").split(
       " "
     );
