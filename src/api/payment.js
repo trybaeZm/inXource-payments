@@ -1,4 +1,4 @@
-import {supabase} from "../services/supabaseClient";
+import { supabase } from "../services/supabaseClient";
 import Swal from "sweetalert2";
 
 const paymentUrl = "http://localhost:4455/api/payment";
@@ -96,7 +96,7 @@ class Payment {
     }
   }
 
-  async saveOrder(payload) {
+  async saveOrder(payload, selectedImages) {
     const body = {
       business_id: payload.userDetails.business_id,
       int_business_id: payload.userDetails.int_business_id,
@@ -109,10 +109,10 @@ class Payment {
 
     try {
       const { data: orderData, error: orderError } = await supabase
-          .from("orders")
-          .insert(body)
-          .select()
-          .single();
+        .from("orders")
+        .insert(body)
+        .select()
+        .single();
 
       if (orderError) {
         console.error("Error creating order:", orderError.message);
@@ -120,6 +120,7 @@ class Payment {
       }
 
       const orderId = orderData.id;
+
 
       if (Array.isArray(payload.items) && payload.items.length > 0) {
         const orderItems = payload.items.map(item => ({
@@ -130,16 +131,16 @@ class Payment {
         }));
 
         const { error: itemsError } = await supabase
-            .from("order_items")
-            .insert(orderItems);
+          .from("order_items")
+          .insert(orderItems);
 
         if (itemsError) {
           console.error("Error saving order items:", itemsError.message);
 
           const { error: deleteError } = await supabase
-              .from("orders")
-              .delete()
-              .eq("id", orderId);
+            .from("orders")
+            .delete()
+            .eq("id", orderId);
 
           if (deleteError) {
             console.error("Rollback failed! Could not delete order:", deleteError.message);
@@ -151,7 +152,38 @@ class Payment {
         }
       }
 
+
+      if (orderData) {
+        try {
+          // If imageData is provided, insert images into the 'product_images' table
+          for (const image of selectedImages) {
+            const { data, error } = await supabase.storage
+              .from('uploaded-files')
+              .upload(
+                `orders/${orderData.id}/${image.name}`,
+                image.file
+              )
+
+            if (data) {
+              console.log(data)
+            }
+
+            if (error) {
+              console.log(error)
+              break;
+            }
+          }
+          
+          return orderData;
+
+        } catch (err) {
+          console.error("Unexpected error creating order:", err.message || err);
+          return null;
+        }
+      }
+
       return orderData;
+
 
     } catch (err) {
       console.error("Unexpected error creating order:", err.message || err);
@@ -161,59 +193,61 @@ class Payment {
 
   async createTransaction() {
     const apiUrl = paymentUrl + "/getToken";
-      const response = await fetch(apiUrl, {
-        method: "POST",
-      });
+    const response = await fetch(apiUrl, {
+      method: "POST",
+    });
 
     return await response.json();
   }
 
   async processPayment(payload) {
     console.log("Processing payment with payload:", payload);
-    const [firstName = "", ...rest] = (payload?.userDetails.name || "").split(
-      " "
-    );
+
+    const [firstName = "", ...rest] = (payload?.userDetails?.name || "").split(" ");
     const lastName = rest.join(" ");
 
     const preparedPayload = {
       description: "test payment",
       customerFirstName: firstName,
       customerLastName: lastName,
-      email: payload?.userDetails.email,
-      phoneNumber: payload?.userDetails.phone,
+      email: payload?.userDetails?.email,
+      phoneNumber: payload?.userDetails?.phone,
       amount: payload.totalPrice,
     };
 
     try {
-      const response = await fetch(
-        paymentUrl + "/initiatePayment",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${payload.token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(preparedPayload),
-        }
-      );
+      const response = await fetch(`${paymentUrl}/initiatePayment`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${payload.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(preparedPayload),
+      });
 
       const result = await response.json();
 
-      if (result.paymentStatus && result.paymentStatus.status === "success") {
+      if (result?.paymentStatus?.status === "success") {
         await this.saveOrder(payload);
-        Swal.fire("Success", "Your order is been processed!", "success");
+        Swal.fire("Success", "Your order has been processed!", "success");
       } else {
-        Swal.fire("Error", "Your order was unsuccessfull!", "error");
-        return result;
+        Swal.fire("Error", "Your order was unsuccessful!", "error");
       }
+
+      return result;
     } catch (error) {
+      console.error("Error processing payment:", error);
+
       Swal.fire({
         title: "Error",
-        text: error.message,
+        text: error?.message || "Something went wrong",
         icon: "error",
       });
+
+      throw error;
     }
   }
+
 }
 
 export default new Payment();

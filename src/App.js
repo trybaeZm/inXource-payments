@@ -4,7 +4,6 @@ import HomePage from './Pages/Homepage';
 import PayForm from './Pages/PayForm'
 import CustomerInfoForm from './Pages/CustomerInfo';
 import ProductSelectionForm from './Pages/ProductForm';
-
 function App() {
   return (
       <Routes>

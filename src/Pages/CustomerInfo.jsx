@@ -13,7 +13,7 @@ const CustomerInfoForm = () => {
     gender: '',
     location: '',
     phone: location.state?.phone,
-    business_id: location.state?.id
+    business_id: location.state?.business_id
   });
 
   const handleChange = (e) => {
@@ -26,6 +26,7 @@ const CustomerInfoForm = () => {
     setLoading(true);
 
     formData.name = formData.firstName + ' ' + formData.lastName;
+    
 
     try {
       const response = await PaymentService.addCustomer(formData);
@@ -55,7 +56,6 @@ const CustomerInfoForm = () => {
       </div>
       <div className=" w-full flex items-center justify-center p-4">
         <div className="bg-gray-700 shadow-md p-8 rounded-xl w-full max-w-2xl">
-
           <form onSubmit={handleSubmit}>
             <label className="block mt-4 mb-1 font-semibold text-[#e0f7fa]" htmlFor="firstName">First Name</label>
             <input
