@@ -1,7 +1,8 @@
 import Swal from 'sweetalert2';
-import React, { useState } from 'react';
-import PaymentService from '../api/payment';
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { useState, type ChangeEvent } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import payment from '../api/payment';
+import type { CustomerType } from '../types/types';
 
 const CustomerInfoForm = () => {
   const location = useLocation();
@@ -13,30 +14,48 @@ const CustomerInfoForm = () => {
     gender: '',
     location: '',
     phone: location.state?.phone,
-    business_id: location.state?.business_id
+    business_id: location.state?.business_id,
+    name: '',
+    email: ''
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+
+  interface AddCustomerResponse {
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    gender?: string;
+    location?: string;
+    phone?: string;
+    business_id?: string;
+    name?: string;
+    email?: string;
+    // Add other expected properties here as needed
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-
-    formData.name = formData.firstName + ' ' + formData.lastName;
-    
+    const customerData: CustomerType = {
+      ...formData,
+      name: formData.firstName + ' ' + formData.lastName
+    };
 
     try {
-      const response = await PaymentService.addCustomer(formData);
+      const response: AddCustomerResponse[] = await payment.addCustomer(customerData);
       const res = response[0];
 
       if (res) {
         navigation('/payment/product', { state: { res } })
       }
-    } catch (error) {
-      Swal.fire('error', error.message, 'error');
+    } catch (error: unknown) {
+      const errorMessage = (error instanceof Error) ? error.message : 'An unexpected error occurred';
+      Swal.fire('error', errorMessage, 'error');
     } finally {
       setLoading(false);
     }

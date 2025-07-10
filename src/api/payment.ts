@@ -1,11 +1,13 @@
 import { supabase } from "../services/supabaseClient";
 import Swal from "sweetalert2";
+import type { CustomerType, payloadType, selectedImagesType } from "../types/types";
 
-const paymentUrl = "http://localhost:4455/api/payment";
+const paymentUrl = "https://paymentbackend.inxource.com/api/payment";
+// const paymentUrl = "http://localhost:4455/api/payment";
 
 class Payment {
 
-  async addCustomer(customer) {
+  async addCustomer(customer: CustomerType) {
     const {
       business_id,
       name,
@@ -37,7 +39,7 @@ class Payment {
     return data;
   }
 
-  async getCompanyInfo(alias) {
+  async getCompanyInfo(alias: string) {
     console.log(alias);
 
     const { data, error } = await supabase
@@ -54,7 +56,7 @@ class Payment {
     return data;
   }
 
-  async getProductInfoByBusiness(business_id) {
+  async getProductInfoByBusiness(business_id: string) {
     const { data, error } = await supabase
       .from("products")
       .select("id, name, price")
@@ -69,34 +71,40 @@ class Payment {
     return data;
   }
 
-  async getCustomerByPhoneAndBusiness(phone, intBusinessId) {
-    try {
-      const { data, error } = await supabase
-        .from("customers")
-        .select("*")
-        .eq("phone", phone)
-        .eq("business_id", intBusinessId)
-        .maybeSingle();
+  async getCustomerByPhoneAndBusiness({ phone, intBusinessId }: { phone: string, intBusinessId: string }): Promise<CustomerType | null> {
+    return new Promise((resolve, reject) => {
+      (async () => {
+        try {
+          const { data, error } = await supabase
+            .from("customers")
+            .select("*")
+            .eq("phone", phone)
+            .eq("business_id", intBusinessId)
+            .maybeSingle();
 
-      if (data) {
-        console.log("Customer data:", data);
-      } else {
-        console.log("No customer found with the provided phone and business ID.");
-      }
+          if (data) {
+            console.log("Customer data:", data);
+          } else {
+            console.log("No customer found with the provided phone and business ID.");
+          }
 
-      if (error) {
-        console.error("Error fetching customer:", error.message);
-        return null;
-      }
+          if (error) {
+            console.error("Error fetching customer:", error.message);
+            resolve(null);
+            return;
+          }
 
-      return data;
+          resolve(data);
 
-    } catch (error) {
-      console.error("Error in getCustomerByPhoneAndBusiness:", error);
-    }
+        } catch (error) {
+          reject(error);
+          console.error("Error in getCustomerByPhoneAndBusiness:", error);
+        }
+      })();
+    })
   }
 
-  async saveOrder(payload, selectedImages) {
+  async saveOrder({ payload, selectedImages }: { payload: payloadType, selectedImages: selectedImagesType[] }) {
     const body = {
       business_id: payload.userDetails.business_id,
       int_business_id: payload.userDetails.int_business_id,
@@ -156,28 +164,34 @@ class Payment {
       if (orderData) {
         try {
           // If imageData is provided, insert images into the 'product_images' table
-          for (const image of selectedImages) {
-            const { data, error } = await supabase.storage
-              .from('uploaded-files')
-              .upload(
-                `orders/${orderData.id}/${image.name}`,
-                image.file
-              )
+          if (selectedImages) {
+            for (const image of selectedImages) {
+              const { data, error } = await supabase.storage
+                .from('uploaded-files')
+                .upload(
+                  `orders/${orderData.id}/${image.name}`,
+                  image.file
+                )
 
-            if (data) {
-              console.log(data)
-            }
+              if (data) {
+                console.log(data)
+              }
 
-            if (error) {
-              console.log(error)
-              break;
+              if (error) {
+                console.log(error)
+                break;
+              }
             }
           }
-          
+
           return orderData;
 
-        } catch (err) {
-          console.error("Unexpected error creating order:", err.message || err);
+        } catch (err: unknown) {
+          if (typeof err === "object" && err !== null && "message" in err) {
+            console.error("Unexpected error creating order:", err.message || err);
+          } else {
+            console.error("Unexpected error creating order:", err);
+          }
           return null;
         }
       }
@@ -185,22 +199,36 @@ class Payment {
       return orderData;
 
 
-    } catch (err) {
-      console.error("Unexpected error creating order:", err.message || err);
+    } catch (err: unknown) {
+      if (typeof err === "object" && err !== null && "message" in err) {
+        console.error("Unexpected error creating order:", err.message || err);
+      } else {
+        console.error("Unexpected error creating order:", err);
+      }
       return null;
     }
   }
 
-  async createTransaction() {
-    const apiUrl = paymentUrl + "/getToken";
-    const response = await fetch(apiUrl, {
-      method: "POST",
-    });
-
-    return await response.json();
+  async createTransaction(): Promise<{ token: string }> {
+    console.log("Creating transaction...");
+    return new Promise((resolve, reject) => {
+      (async () => {
+        try{
+          const apiUrl = paymentUrl + "/getToken";
+          const response = await fetch(apiUrl, {
+            method: "POST",
+          });
+          // console.log('token here...: ' , response.json())
+          resolve(await response.json());
+        } catch (err){
+          console.error("Error creating transaction:", err);
+          reject(err);
+        }
+      })();
+    })
   }
 
-  async processPayment(payload) {
+  async processPayment(payload: payloadType) {
     console.log("Processing payment with payload:", payload);
 
     const [firstName = "", ...rest] = (payload?.userDetails?.name || "").split(" ");
@@ -228,22 +256,14 @@ class Payment {
       const result = await response.json();
 
       if (result?.paymentStatus?.status === "success") {
-        await this.saveOrder(payload);
+        // Pass an empty array or the correct images array if available
+        // await this.saveOrder( payload );
         Swal.fire("Success", "Your order has been processed!", "success");
-      } else {
-        Swal.fire("Error", "Your order was unsuccessful!", "error");
       }
 
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error processing payment:", error);
-
-      Swal.fire({
-        title: "Error",
-        text: error?.message || "Something went wrong",
-        icon: "error",
-      });
-
       throw error;
     }
   }

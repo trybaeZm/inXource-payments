@@ -12,6 +12,9 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
       .select('*')
       .limit(1);
 
+    if (data) {
+
+    }
     if (error) {
       console.error("Supabase test query failed:", error.message);
     } else {

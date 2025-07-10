@@ -2,12 +2,7 @@ import '../styles/hero.css';
 import { motion } from 'framer-motion';
 
 const Hero = () => {
-  const handleScroll = (id) => {
-    const section = document.getElementById(id);
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
+  
 
   return (
     <section

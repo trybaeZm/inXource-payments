@@ -1,9 +1,9 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
 import HomePage from './Pages/Homepage';
 import PayForm from './Pages/PayForm'
 import CustomerInfoForm from './Pages/CustomerInfo';
 import ProductSelectionForm from './Pages/ProductForm';
+import { Route, Routes } from 'react-router-dom';
+
 function App() {
   return (
       <Routes>
