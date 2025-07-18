@@ -19,6 +19,7 @@ const ProductSelectionForm = () => {
   const navigation = useNavigate();
   const [companyProducts, setCompanyProducts] = useState<companyProductsType[]>();
   const [loading, setLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImages, setSelectedImages] = useState<selectedImagesType[] | []>([]);
   const [loadingConfirmation, setLoadingConfirmation] = useState(false);
@@ -116,6 +117,8 @@ const ProductSelectionForm = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setLoading(true);
+    setUploadLoading(true)
+
 
     const userDetails: userTypes = location.state?.data;
     console.log('User Details:', userDetails);
@@ -129,6 +132,7 @@ const ProductSelectionForm = () => {
     PaymentService.createTransaction()
       .then((response) => {
         console.log('Transaction Response:', response);
+        console.log(loading)
         if (response) {
           const payload: payloadType = {
             totalPrice: totalPrice,
@@ -144,9 +148,10 @@ const ProductSelectionForm = () => {
               price: selectedProduct?.price ?? 0,
             },
           };
+          console.log("payload: ", payload)
 
           setLoading(false);
-
+          // setUploadLoading(false)
           Swal.fire({
             title: 'Confirm Order',
             html: `<p><strong>Product:</strong> ${selectedProduct?.name}</p>
@@ -159,33 +164,16 @@ const ProductSelectionForm = () => {
             allowOutsideClick: () => !Swal.isLoading(),
             preConfirm: async (): Promise<void> => {
               try {
+
+                setUploadLoading(false)
                 setLoadingConfirmation(true);
                 PaymentService.processPayment(payload)
                   .then(async (res) => {
                     console.log("data form api:", res);
-                    //ss
                     if (res.paymentStatus.status == 'success') {
                       const orderResponse = await PaymentService.saveOrder({ payload, selectedImages });
                       if (orderResponse) {
-                        Swal.fire('Success', 'Order placed successfully!', 'success');
-                        try {
-                          const orderResponse = await PaymentService.saveOrder({ payload, selectedImages });
-                          if (orderResponse) {
-                            Swal.fire('Success', 'Order placed successfully!', 'success');
-                            setLoadingConfirmation(false);
-                            setTimeout(() => {
-                              navigation('/');
-                            }, 2000);
-                          } else {
-                            setLoadingConfirmation(false);
-                            Swal.fire('Error', 'Failed to save order', 'error');
-                          }
-                        } catch (error) {
-                          if (error) {
-                            setLoadingConfirmation(false);
-                            Swal.fire('Error', 'Failed to save order', 'error');
-                          }
-                        }
+                        Swal.fire({ title: 'Success', html: 'Order placed successfully!', icon: 'success', confirmButtonText: 'Ok', preConfirm: () => navigation('/') });
                       } else {
                         setLoadingConfirmation(false);
                         Swal.fire('Error', 'Failed to save order for some unknown reason', 'error');
@@ -195,7 +183,6 @@ const ProductSelectionForm = () => {
                       setLoadingConfirmation(false);
                       Swal.fire('Error', 'Payment failed. Please try again.', 'error');
                     }
-
                   })
                   .catch((error) => {
                     setLoadingConfirmation(false);
@@ -218,10 +205,14 @@ const ProductSelectionForm = () => {
           })
             .then((result) => {
               console.log(result)
+              setUploadLoading(false)
               if (result.isConfirmed) {
                 // navigation('/');
               }
-            });
+            })
+            .finally(() => {
+              setUploadLoading(false)
+            })
         }
       })
       .catch((error) => {
@@ -233,7 +224,11 @@ const ProductSelectionForm = () => {
             : String(error);
         Swal.fire('Error', errorMessage, 'error');
         setLoading(false);
+        setUploadLoading(false)
         return;
+      })
+      .finally(() => {
+        setUploadLoading(false)
       })
   };
 
@@ -268,6 +263,7 @@ const ProductSelectionForm = () => {
                 <label htmlFor="productId" className="block mt-4 mb-1 font-bold text-[#e0f7fa]">
                   Product
                 </label>
+
                 <select
                   id="productId"
                   name="productId"
@@ -364,13 +360,13 @@ const ProductSelectionForm = () => {
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className={`mt-5 w-full py-3 rounded-md font-bold transition-colors duration-300 ${loading
+                  disabled={uploadLoading}
+                  className={`mt-5 w-full py-3 rounded-md font-bold transition-colors duration-300 ${uploadLoading
                     ? 'bg-[#80d0e3] text-[#0d1b2a] opacity-70 cursor-not-allowed'
                     : 'bg-[#00b4d8] text-[#0d1b2a] hover:bg-[#009ac1] cursor-pointer'
                     }`}
                 >
-                  {loading ? 'Placing order...' : 'Place Order'}
+                  {uploadLoading ? 'Placing order...' : 'Place Order'}
                 </button>
               </form>
             </div>
@@ -380,5 +376,4 @@ const ProductSelectionForm = () => {
     </div>
   );
 };
-
 export default ProductSelectionForm;
