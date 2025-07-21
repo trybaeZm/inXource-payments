@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import PaymentService from '../api/payment';
-import { useParams, useNavigate } from 'react-router-dom';
+import {  useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import type { companyInfoType } from '../types/types';
+import { useSearchParams } from 'react-router-dom';
 
 const PhoneVerification = () => {
   const navigation = useNavigate();
@@ -11,42 +12,29 @@ const PhoneVerification = () => {
   const [loading, setLoading] = useState(false);
   const [loadingCompany, setLoadingCompany] = useState(true);
 
-  const { alias } = useParams();
+  const [searchParams] = useSearchParams();
+
+  const id = searchParams.get("id");
+  const companyAlias = searchParams.get("companyAlias");
 
   const fetchCompanyInfo = useCallback(async () => {
     setLoadingCompany(true);
-
     try {
-      // First request: decrypt token
-      const tokenResponse = await fetch('https://dashboard.inxource.com/api/dycryptToken', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token: alias }),
-      });
-
-      if (!tokenResponse.ok) {
-        throw new Error(`Failed to decrypt token. Status: ${tokenResponse.status}`);
-      }
-
-      const decryptedData = await tokenResponse.json();
-
-      if (!decryptedData?.id) {
+      if (!id) {
         throw new Error('Invalid decrypted token data');
       }
-
       // Second request: fetch company data
       const companyResponse = await fetch('https://dashboard.inxource.com/api/fetchCompany', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ business_id: decryptedData.id }),
+        body: JSON.stringify({ business_id: id }),
       });
 
       if (!companyResponse.ok) {
         throw new Error(`Failed to fetch company data. Status: ${companyResponse.status}`);
+        // console.log(companyResponse)
       }
 
       const businessData = await companyResponse.json();
@@ -59,12 +47,12 @@ const PhoneVerification = () => {
     } finally {
       setLoadingCompany(false);
     }
-  }, [alias]);
-
+  }, [id]);
 
   useEffect(() => {
-    if (alias) fetchCompanyInfo();
-  }, [alias, fetchCompanyInfo]);
+    // console.log(companyAlias, id)
+    if (companyAlias) fetchCompanyInfo();
+  }, [companyAlias, fetchCompanyInfo]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

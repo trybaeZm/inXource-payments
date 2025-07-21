@@ -8,7 +8,7 @@ function App() {
   return (
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/payment/:alias" element={<PayForm />} />
+        <Route path="/payment" element={<PayForm />} />
         <Route path="/payment/info" element={<CustomerInfoForm />} />
         <Route path="/payment/product" element={<ProductSelectionForm />} />
       </Routes>
