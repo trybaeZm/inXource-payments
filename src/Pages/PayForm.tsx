@@ -18,6 +18,7 @@ const PhoneVerification = () => {
   const companyAlias = searchParams.get("companyAlias");
 
   const fetchCompanyInfo = useCallback(async () => {
+    console.log(id, companyAlias)
     setLoadingCompany(true);
     try {
       if (!id) {

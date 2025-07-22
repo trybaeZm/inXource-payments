@@ -90,7 +90,8 @@ const ProductSelectionForm = () => {
   const [formData, setFormData] = useState({
     productId: '',
     quantity: '',
-    location: ''
+    location: '',
+    summarized_notes: ''
   });
 
   const [totalPrice, setTotalPrice] = useState(0);
@@ -99,9 +100,12 @@ const ProductSelectionForm = () => {
     productId: string;
     quantity: string;
     location: string;
+    summarized_notes: string;
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     const updatedData: FormDataType = { ...formData, [name]: value };
     setFormData(updatedData);
@@ -140,6 +144,7 @@ const ProductSelectionForm = () => {
             token: response.token,
             formData: {
               location: formData.location,
+              sammarized_notes: formData.summarized_notes
             },
             items: {
               orderId: '', // Set this if you have an orderId, otherwise leave as empty string or generate appropriately
@@ -357,6 +362,18 @@ const ProductSelectionForm = () => {
                 <p className="text-[#90e0ef] mt-3">
                   Total Price: <strong>ZMW {totalPrice.toFixed(2)}</strong>
                 </p>
+
+                <label htmlFor="summarized_notes" className="block mt-4 mb-1 font-bold text-[#e0f7fa]">
+                  Summarized Notes (optional)
+                </label>
+                <textarea
+                  id="summarized_notes"
+                  name="summarized_notes"
+                  value={formData.summarized_notes}
+                  onChange={handleChange}
+                  rows={5} // sets a fixed height roughly equivalent to 5 lines
+                  className="w-full px-3 py-2 rounded-md bg-[#415a77] text-white text-base focus:outline-none resize-none"
+                />
 
                 <button
                   type="submit"

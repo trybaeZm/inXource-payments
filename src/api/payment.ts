@@ -113,7 +113,8 @@ class Payment {
       total_amount: payload.totalPrice,
       order_status: "pending",
       product_id: payload.items.product_id,
-      delivery_location: payload?.formData.location || null
+      delivery_location: payload?.formData.location || null,
+      sammarized_notes: payload?.formData.sammarized_notes
     };
 
     try {

@@ -10,41 +10,42 @@ export type CustomerType = {
 export type userTypes = {
     business_id: string
     int_business_id: string
-    id:string
-    customer_id:string
+    id: string
+    customer_id: string
     name: string
     email: string
-    phone:number
+    phone: number
 }
 
 export type companyInfoType = {
-    id :string
+    id: string
     logo_url: string
     business_name: string
-} 
+}
 export type payloadType = {
     userDetails: userTypes
-    formData : {
-        location : string
+    formData: {
+        sammarized_notes: string
+        location: string
     }
-     totalPrice: number
-     items : {
+    totalPrice: number
+    items: {
         orderId: string
-        product_id:string
+        product_id: string
         quantity: number
         price: number
-     }
-      token: string
+    }
+    token: string
 }
 
 export type selectedImagesType = {
     name: string
     file: File
-    url:string
+    url: string
 }
 
 export type companyProductsType = {
     name: string
-    price:number
-    id:string
+    price: number
+    id: string
 }
