@@ -3,7 +3,7 @@ import { PhotoIcon } from '@heroicons/react/24/outline';
 import Swal from 'sweetalert2';
 import PaymentService from '../api/payment';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { companyProductsType, payloadType, selectedImagesType, userTypes } from '../types/types';
+import type { companyProductsType, payloadType, PaymentReturnType, selectedImagesType, userTypes } from '../types/types';
 
 const spinnerStyle = {
   display: 'flex',
@@ -135,8 +135,13 @@ const ProductSelectionForm = () => {
 
     PaymentService.createTransaction()
       .then((response) => {
+
+
         console.log('Transaction Response:', response);
+
+
         console.log(loading)
+
         if (response) {
           const payload: payloadType = {
             totalPrice: totalPrice,
@@ -169,14 +174,16 @@ const ProductSelectionForm = () => {
             allowOutsideClick: () => !Swal.isLoading(),
             preConfirm: async (): Promise<void> => {
               try {
-
                 setUploadLoading(false)
                 setLoadingConfirmation(true);
-                PaymentService.processPayment(payload)
-                  .then(async (res) => {
+                
+                // initiate payment here
+                PaymentService.processPayment({payload, selectedImages})
+                  .then(async (res: PaymentReturnType) => {
                     console.log("data form api:", res);
+
                     if (res.paymentStatus.status == 'success') {
-                      const orderResponse = await PaymentService.saveOrder({ payload, selectedImages });
+                      const orderResponse = await PaymentService.updateSaveStatus(res.data);
                       if (orderResponse) {
                         Swal.fire({ title: 'Success', html: 'Order placed successfully!', icon: 'success', confirmButtonText: 'Ok', preConfirm: () => navigation('/') });
                       } else {
@@ -189,6 +196,7 @@ const ProductSelectionForm = () => {
                       Swal.fire('Error', 'Payment failed. Please try again.', 'error');
                     }
                   })
+
                   .catch((error) => {
                     setLoadingConfirmation(false);
                     console.error('Error processing payment:', error);

@@ -112,6 +112,7 @@ class Payment {
       int_customer_id: payload.userDetails.customer_id,
       total_amount: payload.totalPrice,
       order_status: "pending",
+      order_payment_status: "pending",
       product_id: payload.items.product_id,
       delivery_location: payload?.formData.location || null,
       sammarized_notes: payload?.formData.sammarized_notes
@@ -130,7 +131,6 @@ class Payment {
       }
 
       const orderId = orderData.id;
-
 
       if (Array.isArray(payload.items) && payload.items.length > 0) {
         const orderItems = payload.items.map(item => ({
@@ -211,18 +211,42 @@ class Payment {
     }
   }
 
+  async updateSaveStatus(id: string): Promise<boolean> {
+    // Fire the update call
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ order_payment_status: 'completed' })
+      .eq('id', id);
+
+    // If Supabase tells you there was an error, throw it so callers can catch
+    if (error) {
+      console.error("Failed to update order status:", error);
+      throw error;
+    }
+
+    // Optionally, check that data is non-empty
+    if (!data) {
+      console.warn("No rows were updated for id:", id);
+      return false;
+    }
+
+    console.log("Update success for order id:", id, data);
+    return true;
+  }
+
+
   async createTransaction(): Promise<{ token: string }> {
     console.log("Creating transaction...");
     return new Promise((resolve, reject) => {
       (async () => {
-        try{
+        try {
           const apiUrl = paymentUrl + "/getToken";
           const response = await fetch(apiUrl, {
             method: "POST",
           });
           // console.log('token here...: ' , response.json())
           resolve(await response.json());
-        } catch (err){
+        } catch (err) {
           console.error("Error creating transaction:", err);
           reject(err);
         }
@@ -230,46 +254,49 @@ class Payment {
     })
   }
 
-  async processPayment(payload: payloadType) {
-    console.log("Processing payment with payload:", payload);
+  async processPayment({ payload, selectedImages }: { payload: payloadType, selectedImages: selectedImagesType[] }) {
+    const orderResponse = await this.saveOrder({ payload, selectedImages })
+    if (orderResponse) {
+      console.log("Processing payment with payload:", payload);
 
-    const [firstName = "", ...rest] = (payload?.userDetails?.name || "").split(" ");
-    const lastName = rest.join(" ");
+      const [firstName = "", ...rest] = (payload?.userDetails?.name || "").split(" ");
+      const lastName = rest.join(" ");
 
-    const preparedPayload = {
-      description: "test payment",
-      customerFirstName: firstName,
-      customerLastName: lastName,
-      email: payload?.userDetails?.email,
-      phoneNumber: payload?.userDetails?.phone,
-      amount: payload.totalPrice,
-    };
+      const preparedPayload = {
+        description: "test payment",
+        customerFirstName: firstName,
+        customerLastName: lastName,
+        email: payload?.userDetails?.email,
+        phoneNumber: payload?.userDetails?.phone,
+        amount: payload.totalPrice,
+        order_id: orderResponse.id
+      };
 
-    try {
-      const response = await fetch(`${paymentUrl}/initiatePayment`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${payload.token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(preparedPayload),
-      });
 
-      const result = await response.json();
+      try {
+        const response = await fetch(`${paymentUrl}/initiatePayment`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${payload.token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(preparedPayload),
+        });
+        const result = await response.json();
+        if (result?.paymentStatus?.status === "success") {
+          // Pass an empty array or the correct images array if available
+          // await this.saveOrder( payload );
+          Swal.fire("Success", "Your order has been processed!", "success");
+        }
 
-      if (result?.paymentStatus?.status === "success") {
-        // Pass an empty array or the correct images array if available
-        // await this.saveOrder( payload );
-        Swal.fire("Success", "Your order has been processed!", "success");
+        return result;
+      } catch (error: unknown) {
+        console.error("Error processing payment:", error);
+        throw error;
       }
-
-      return result;
-    } catch (error: unknown) {
-      console.error("Error processing payment:", error);
-      throw error;
     }
-  }
 
+  }
 }
 
 export default new Payment();

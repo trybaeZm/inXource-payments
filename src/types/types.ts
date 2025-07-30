@@ -49,3 +49,26 @@ export type companyProductsType = {
     price: number
     id: string
 }
+
+export type OrderType = {
+    id: string;
+    order_id: number;
+    business_id: string;
+    int_business_id: number;
+    customer_id: string;
+    int_customer_id: number;
+    total_amount: number;
+    order_status: string;
+    created_at: string;
+    delivery_location: string | null;
+};
+
+export type PaymentReturnType = {
+    success: string;
+    paymentStatus:  paymentStatus
+    data: string
+}
+
+export type paymentStatus = {
+    status: string
+}
