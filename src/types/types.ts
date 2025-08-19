@@ -23,12 +23,13 @@ export type companyInfoType = {
     business_name: string
 }
 export type payloadType = {
+    totalAmount:number;
     userDetails: userTypes
     formData: {
         sammarized_notes: string
         location: string
     }
-    totalPrice: number
+    totalPartialPrice: number
     items: {
         orderId: string
         product_id: string
@@ -48,6 +49,7 @@ export type companyProductsType = {
     name: string
     price: number
     id: string
+    partialPayment: number
 }
 
 export type OrderType = {

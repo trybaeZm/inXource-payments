@@ -59,7 +59,7 @@ class Payment {
   async getProductInfoByBusiness(business_id: string) {
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, price")
+      .select("id, name, price, partialPayment")
       .eq("int_business_id", business_id);
 
     if (error) {
@@ -110,7 +110,8 @@ class Payment {
       int_business_id: payload.userDetails.int_business_id,
       customer_id: payload.userDetails.id,
       int_customer_id: payload.userDetails.customer_id,
-      total_amount: payload.totalPrice,
+      total_amount: payload.totalAmount,
+      partialAmountTotal: payload.totalPartialPrice, 
       order_status: "pending",
       order_payment_status: "pending",
       product_id: payload.items.product_id,
@@ -268,7 +269,8 @@ class Payment {
         customerLastName: lastName,
         email: payload?.userDetails?.email,
         phoneNumber: payload?.userDetails?.phone,
-        amount: payload.totalPrice,
+        amount: payload.totalAmount,
+        partialAmount: payload.totalPartialPrice,
         order_id: orderResponse.id
       };
 

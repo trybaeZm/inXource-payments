@@ -95,6 +95,7 @@ const ProductSelectionForm = () => {
   });
 
   const [totalPrice, setTotalPrice] = useState(0);
+  const [totalPartialPrice, setTotalPartialPrice] = useState(0);
 
   interface FormDataType {
     productId: string;
@@ -113,6 +114,7 @@ const ProductSelectionForm = () => {
     const product = companyProducts?.find((p) => p.id.toString() === updatedData.productId);
     if (product && updatedData.quantity) {
       setTotalPrice(product.price * parseFloat(updatedData.quantity));
+      setTotalPartialPrice(product.partialPayment * parseFloat(updatedData.quantity));
     } else {
       setTotalPrice(0);
     }
@@ -144,7 +146,8 @@ const ProductSelectionForm = () => {
 
         if (response) {
           const payload: payloadType = {
-            totalPrice: totalPrice,
+            totalAmount: totalPrice,
+            totalPartialPrice: totalPartialPrice,
             userDetails: userDetails,
             token: response.token,
             formData: {
@@ -166,7 +169,10 @@ const ProductSelectionForm = () => {
             title: 'Confirm Order',
             html: `<p><strong>Product:</strong> ${selectedProduct?.name}</p>
          <p><strong>Quantity:</strong> ${formData.quantity}</p>
-         <p><strong>Total:</strong> ZMW ${totalPrice.toFixed(2)}</p>`,
+         <p><strong>Total amount Payable:</strong> ZMW ${totalPartialPrice.toFixed(2)}</p> 
+         <p>User is required to inipayment of above amount and the rest upon completion of service and or delivery</p>`
+
+         ,
             icon: 'info',
             showCancelButton: true,
             confirmButtonText: 'Place Order',

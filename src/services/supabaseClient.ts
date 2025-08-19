@@ -13,7 +13,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
       .limit(1);
 
     if (data) {
-
+      console.log('ok')
     }
     if (error) {
       console.error("Supabase test query failed:", error.message);
