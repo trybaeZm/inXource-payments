@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PhotoIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import Swal from 'sweetalert2';
 import PaymentService from '../api/payment';
+// Removed next/image import since it's not available in this project.
 import { useLocation, useNavigate } from 'react-router-dom';
+
 import type { companyProductsType, payloadType, PaymentReturnType, selectedImagesType, userTypes } from '../types/types';
 
 const spinnerStyle = {
@@ -23,6 +25,8 @@ const ProductSelectionForm = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImages, setSelectedImages] = useState<selectedImagesType[] | []>([]);
   const [loadingConfirmation, setLoadingConfirmation] = useState(false);
+  const [productId, setProductId] = useState('')
+  const [openProductCard, setOpenProductCard] = useState(false)
 
 
   const handleDivClick = () => {
@@ -65,27 +69,29 @@ const ProductSelectionForm = () => {
   const companyInfoString = sessionStorage.getItem('companyInfo');
   const company = companyInfoString ? JSON.parse(companyInfoString) : null;
 
-  useEffect(() => {
-    const fetchCompanyProduct = async () => {
-      try {
-        const res = await PaymentService.getProductInfoByBusiness(company.business_id)
-        setCompanyProducts(res ?? undefined);
-      } catch (error) {
-        const errorMessage =
-          typeof error === 'object' &&
-            error !== null &&
-            'message' in error
-            ? (error as { message: string }).message
-            : String(error);
-        Swal.fire('An Error Occured', errorMessage, 'error');
-        console.error('Error fetching company info:', errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchCompanyProduct = async () => {
+    console.log('ok')
+    try {
+      const res = await PaymentService.getProductInfoByBusiness(company.business_id)
+      setCompanyProducts(res ?? undefined);
+    } catch (error) {
+      const errorMessage =
+        typeof error === 'object' &&
+          error !== null &&
+          'message' in error
+          ? (error as { message: string }).message
+          : String(error);
+      Swal.fire('An Error Occured', errorMessage, 'error');
+      console.error('Error fetching company info:', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (company) fetchCompanyProduct();
-  }, [company]);
+
+  useEffect(() => {
+    fetchCompanyProduct()
+  }, []);
 
   const [formData, setFormData] = useState({
     productId: '',
@@ -94,8 +100,6 @@ const ProductSelectionForm = () => {
     summarized_notes: ''
   });
 
-  const [totalPrice, setTotalPrice] = useState(0);
-  const [totalPartialPrice, setTotalPartialPrice] = useState(0);
 
   interface FormDataType {
     productId: string;
@@ -110,14 +114,6 @@ const ProductSelectionForm = () => {
     const { name, value } = e.target;
     const updatedData: FormDataType = { ...formData, [name]: value };
     setFormData(updatedData);
-
-    const product = companyProducts?.find((p) => p.id.toString() === updatedData.productId);
-    if (product && updatedData.quantity) {
-      setTotalPrice(product.price * parseFloat(updatedData.quantity));
-      setTotalPartialPrice(product.partialPayment * parseFloat(updatedData.quantity));
-    } else {
-      setTotalPrice(0);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
@@ -135,7 +131,7 @@ const ProductSelectionForm = () => {
 
 
 
-    PaymentService.createTransaction()
+    PaymentService.createTransaction(productId, parseInt(formData.quantity))
       .then((response) => {
 
 
@@ -146,8 +142,8 @@ const ProductSelectionForm = () => {
 
         if (response) {
           const payload: payloadType = {
-            totalAmount: totalPrice,
-            totalPartialPrice: totalPartialPrice,
+            totalAmount: parseFloat(formData.quantity) * (companyProducts?.find((e) => e.id === productId)?.price || 0) || 0,
+            totalPartialPrice: parseFloat(formData.quantity) * (companyProducts?.find((e) => e.id === productId)?.partialPayment || 0) || 0,
             userDetails: userDetails,
             token: response.token,
             formData: {
@@ -156,7 +152,7 @@ const ProductSelectionForm = () => {
             },
             items: {
               orderId: '', // Set this if you have an orderId, otherwise leave as empty string or generate appropriately
-              product_id: selectedProduct?.id.toString() ?? '',
+              product_id: productId,
               quantity: parseFloat(formData.quantity),
               price: selectedProduct?.price ?? 0,
             },
@@ -167,12 +163,12 @@ const ProductSelectionForm = () => {
           // setUploadLoading(false)
           Swal.fire({
             title: 'Confirm Order',
-            html: `<p><strong>Product:</strong> ${selectedProduct?.name}</p>
+            html: `<p><strong>Product:</strong> ${companyProducts?.filter((e) => e.id == productId)[0].name || ''}</p>
          <p><strong>Quantity:</strong> ${formData.quantity}</p>
-         <p><strong>Total amount Payable:</strong> ZMW ${totalPartialPrice.toFixed(2)}</p> 
+         <p><strong>Total amount Payable:</strong> ZMW ${(parseFloat(formData.quantity) * (companyProducts?.find((e) => e.id === productId)?.partialPayment || 0) || 0).toFixed(2)}</p> 
          <p>User is required to inipayment of above amount and the rest upon completion of service and or delivery</p>`
 
-         ,
+            ,
             icon: 'info',
             showCancelButton: true,
             confirmButtonText: 'Place Order',
@@ -182,9 +178,9 @@ const ProductSelectionForm = () => {
               try {
                 setUploadLoading(false)
                 setLoadingConfirmation(true);
-                
+
                 // initiate payment here
-                PaymentService.processPayment({payload, selectedImages})
+                PaymentService.processPayment({ payload, selectedImages })
                   .then(async (res: PaymentReturnType) => {
                     console.log("data form api:", res);
 
@@ -251,6 +247,102 @@ const ProductSelectionForm = () => {
       })
   };
 
+  const ImageComponent = ({ product }: { product: companyProductsType }) => {
+    const [imageUrl, setImageUrl] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false);
+
+
+    const getImageUrl = async () => {
+      setLoading(true);
+      PaymentService.getProductImages(product.id)
+        .then((res) => {
+          console.log(res, res?.length)
+          if (res && res.length > 0) {
+            setImageUrl(res[0])
+          }
+        })
+        .catch((err) => {
+          console.log(err)
+        })
+        .finally(() => {
+          setLoading(false);
+        })
+    };
+
+    useEffect(() => {
+      getImageUrl();
+    }, []);
+
+    return (
+      <div className="w-20 h-20 bg-gray-600 rounded-md mb-2 flex items-center justify-center overflow-hidden">
+        {loading ? (
+          <span className="text-gray-400 text-sm">Loading...</span>
+        ) : imageUrl ? (
+          <img
+            src={encodeURIComponent(imageUrl)} // ✅ Use the raw URL
+            alt="Product image"
+            width={100}
+            height={100}
+            style={{ objectFit: 'contain' }}
+          />
+        ) : (
+          <span className="text-gray-400 text-sm">No Image</span>
+        )}
+      </div>
+    );
+  };
+
+  const ProductPopUp = ({ setProductId }: { setProductId: (id: string) => void }) => {
+    return (
+      <div className="fixed flex justify-center items-center top-0 w-full h-full left-0 bg-[#00000050]">
+        <div className="bg-gray-800 mb-2 p-5 rounded-md shadow-md w-[400px] max-h-[80vh] overflow-y-auto">
+          {/* Header */}
+          <div className="text-white text-lg font-semibold">Select Product</div>
+          <hr className="my-3 border-gray-600" />
+
+          {/* Product Cards */}
+          <div className="grid grid-cols-2 gap-4">
+            {companyProducts &&
+              companyProducts.map((product) => (
+                <button
+                  type="button"
+                  onClick={() => setProductId(product.id)}
+                  className={`rounded-lg relative p-3 flex flex-col items-center text-center transition ${productId === product.id ? "ring-2 ring-green-500 bg-gray-700" : "hover:shadow-lg bg-gray-700/50"}`}
+                >
+                  {/* Check Icon */}
+                  {productId === product.id && (
+                    <CheckCircleIcon className="text-green-500 size-6 absolute right-2 top-2" />
+                  )}
+
+                  {/* Product Image */}
+                  <ImageComponent product={product} />
+                  {/* Product Name */}
+                  <div className="text-white font-medium">{product.name}</div>
+                </button>
+              ))}
+          </div>
+
+          {/* Footer buttons */}
+          <div className="flex mt-6">
+            <button
+              onClick={() => setOpenProductCard(false)}
+              className="w-full py-3 px-3 rounded-s-md font-bold transition-colors duration-300 bg-[#00b4d8] text-[#0d1b2a] hover:bg-[#009ac1] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => setOpenProductCard(false)}
+              className="w-full py-3 px-3 rounded-e-md font-bold transition-colors duration-300 bg-[#00b4d8] text-[#0d1b2a] hover:bg-[#009ac1] cursor-pointer"
+            >
+              Complete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+
   return (
     <div className="bg-gray-800 text-white font-sans py-20 min-h-screen m-0 flex justify-center items-center">
       {!companyProducts ?
@@ -282,23 +374,26 @@ const ProductSelectionForm = () => {
                 <label htmlFor="productId" className="block mt-4 mb-1 font-bold text-[#e0f7fa]">
                   Product
                 </label>
+                <button type='button' onClick={() => setOpenProductCard(true)} className='w-full px-3 py-2 cursor-pointer hover:opacity-[0.7] transition-ease duration-500 rounded-md bg-[#415a77] text-white text-base focus:outline-none'>
+                  Select Products
+                </button>
 
-                <select
-                  id="productId"
-                  name="productId"
-                  value={formData.productId}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 rounded-md bg-[#415a77] text-white text-base focus:outline-none"
-                >
-                  <option value="">-- Select a Product --</option>
-                  {companyProducts &&
-                    companyProducts.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name} - ZMW {product.price}
-                      </option>
-                    ))}
-                </select>
+                {productId ?
+                  <i>
+                    you have selected <span className='font-bold'> {companyProducts && companyProducts?.filter((e) => e.id == productId)[0].name}</span>
+                  </i>
+                  :
+                  ''
+                }
+
+                {
+                  openProductCard ?
+                    <>
+                      <ProductPopUp setProductId={setProductId} />
+                    </>
+                    :
+                    <></>
+                }
 
                 <label htmlFor="quantity" className="block mt-4 mb-1 font-bold text-[#e0f7fa]">
                   Quantity
@@ -374,7 +469,7 @@ const ProductSelectionForm = () => {
                   className="w-full px-3 py-2 rounded-md bg-[#415a77] text-white text-base focus:outline-none"
                 />
                 <p className="text-[#90e0ef] mt-3">
-                  Total Price: <strong>ZMW {totalPrice.toFixed(2)}</strong>
+                  Total Price: <strong>ZMW {parseFloat(formData.quantity) * (companyProducts.find((e) => e.id === productId)?.price || 0) || 0}</strong>
                 </p>
 
                 <label htmlFor="summarized_notes" className="block mt-4 mb-1 font-bold text-[#e0f7fa]">

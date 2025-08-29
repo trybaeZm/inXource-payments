@@ -111,7 +111,7 @@ class Payment {
       customer_id: payload.userDetails.id,
       int_customer_id: payload.userDetails.customer_id,
       total_amount: payload.totalAmount,
-      partialAmountTotal: payload.totalPartialPrice, 
+      partialAmountTotal: payload.totalPartialPrice,
       order_status: "pending",
       order_payment_status: "pending",
       product_id: payload.items.product_id,
@@ -235,24 +235,55 @@ class Payment {
     return true;
   }
 
-
-  async createTransaction(): Promise<{ token: string }> {
+  async createTransaction(id: string, quantity: number): Promise<{ token: string }> {
     console.log("Creating transaction...");
-    return new Promise((resolve, reject) => {
-      (async () => {
-        try {
-          const apiUrl = paymentUrl + "/getToken";
-          const response = await fetch(apiUrl, {
-            method: "POST",
-          });
-          // console.log('token here...: ' , response.json())
-          resolve(await response.json());
-        } catch (err) {
-          console.error("Error creating transaction:", err);
-          reject(err);
+
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+        id,
+        orders(quantity),
+        stock_table(quantity)
+      `)
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+
+      if (!data) throw new Error("Product not found");
+
+      // Sum up stock quantities
+      const stockIn = data.stock_table?.reduce((acc, cur) => acc + (cur.quantity || 0), 0) || 0;
+
+      // Sum up order quantities
+      const stockOut = data.orders?.reduce((acc, cur) => acc + (cur.quantity || 0), 0) || 0;
+
+      // Remaining stock
+      const totalStockRemaining = stockIn - stockOut;
+
+      if (totalStockRemaining >= quantity) {
+        console.log("Purchase can proceed");
+
+        const apiUrl = paymentUrl + "/getToken";
+        const response = await fetch(apiUrl, {
+          method: "POST",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Payment API failed: ${response.status}`);
         }
-      })();
-    })
+
+        const result = await response.json();
+        return result; // should include { token: string }
+      } else {
+        Swal.fire("Out of Stock", "Not enough stock available!", "error");
+        throw new Error("Insufficient stock");
+      }
+    } catch (err) {
+      console.error("Error in createTransaction:", err);
+      throw err;
+    }
   }
 
   async processPayment({ payload, selectedImages }: { payload: payloadType, selectedImages: selectedImagesType[] }) {
@@ -299,6 +330,51 @@ class Payment {
     }
 
   }
+
+  // Get all images for a specific product
+
+  getProductImages = async (productId: string): Promise<string[] | null> => {
+    console.log(productId)
+
+
+    const { data, error } = await supabase
+      .storage
+      .from('uploaded-files')
+      .list(`products/${productId}`, {
+        limit: 100,
+        offset: 0,
+        sortBy: { column: 'name', order: 'asc' }
+      });
+
+    return new Promise((resolve, reject) => {
+      try {
+
+        if (error) {
+          console.error("Error fetching product images:", error);
+          reject(error);
+        }
+
+        if (data) {
+          const imageUrls = data.map(file =>
+            supabase.storage
+              .from('uploaded-files')
+              .getPublicUrl(`products/${productId}/${file.name}`)
+              .data.publicUrl
+          );
+          resolve(imageUrls);
+        }
+
+        else {
+          console.warn("No images found for product:", productId);
+          resolve([]);
+        }
+      } catch (error) {
+        console.error("Error fetching product images:", error);
+        reject(error);
+      }
+    })
+  }
+
 }
 
 export default new Payment();
