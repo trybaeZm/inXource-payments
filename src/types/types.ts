@@ -47,6 +47,7 @@ export type selectedImagesType = {
 
 export type companyProductsType = {
     name: string
+    imageName:string
     price: number
     id: string
     partialPayment: number

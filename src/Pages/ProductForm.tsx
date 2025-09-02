@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircleIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import Swal from 'sweetalert2';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../Components/ui/dialog"
 import PaymentService from '../api/payment';
 // Removed next/image import since it's not available in this project.
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -27,7 +33,6 @@ const ProductSelectionForm = () => {
   const [loadingConfirmation, setLoadingConfirmation] = useState(false);
   const [productId, setProductId] = useState('')
   const [openProductCard, setOpenProductCard] = useState(false)
-
 
   const handleDivClick = () => {
     if (selectedImages.length >= 3) {
@@ -252,38 +257,33 @@ const ProductSelectionForm = () => {
     const [loading, setLoading] = useState(false);
 
 
-    const getImageUrl = async () => {
-      setLoading(true);
-      PaymentService.getProductImages(product.id)
+    const getImages = () => {
+      PaymentService.getProductImages(product.id, product.imageName)
         .then((res) => {
-          console.log(res, res?.length)
+          console.log("images collected", res)
           if (res && res.length > 0) {
-            setImageUrl(res[0])
+            setImageUrl(res)
           }
         })
-        .catch((err) => {
-          console.log(err)
-        })
+        .catch((err) => console.error(err))
         .finally(() => {
-          setLoading(false);
+          setLoading(false)
         })
-    };
+    }
 
     useEffect(() => {
-      getImageUrl();
+      getImages();
     }, []);
 
     return (
-      <div className="w-20 h-20 bg-gray-600 rounded-md mb-2 flex items-center justify-center overflow-hidden">
+      <div className=" rounded-md mb-2 flex items-center justify-center overflow-hidden">
         {loading ? (
           <span className="text-gray-400 text-sm">Loading...</span>
         ) : imageUrl ? (
           <img
-            src={encodeURIComponent(imageUrl)} // ✅ Use the raw URL
+            src={imageUrl} // ✅ Use the raw URL
             alt="Product image"
-            width={100}
-            height={100}
-            style={{ objectFit: 'contain' }}
+            style={{ objectFit: 'cover' }}
           />
         ) : (
           <span className="text-gray-400 text-sm">No Image</span>
@@ -292,59 +292,49 @@ const ProductSelectionForm = () => {
     );
   };
 
-  const ProductPopUp = ({ setProductId }: { setProductId: (id: string) => void }) => {
+  const ProductPopUp = ({ setProductId, open, onClose }: { setProductId: (id: string) => void, open: boolean, onClose: () => void }) => {
     return (
-      <div className="fixed flex justify-center items-center top-0 w-full h-full left-0 bg-[#00000050]">
-        <div className="bg-gray-800 mb-2 p-5 rounded-md shadow-md w-[400px] max-h-[80vh] overflow-y-auto">
-          {/* Header */}
-          <div className="text-white text-lg font-semibold">Select Product</div>
-          <hr className="my-3 border-gray-600" />
+      <Dialog open={open} onOpenChange={(isOpen: boolean) => !isOpen && onClose()}>
+        <DialogContent className="w-full text-gray-200  overflow-y-auto z-[9999] bg-gray-800 rounded-lg shadow-lg p-6">
+          <DialogHeader>
+            <DialogTitle className="">
+              Select Product
+            </DialogTitle>
+          </DialogHeader>
+          <div className='h-full overflow-y-auto max-h-[800px]'>
+            {/* Product Cards */}
+            <div className="grid p-5 lg:grid-cols-3 md:grid-cols-6 sm:grid-cols-4 grid-cols-1 gap-4">
+              {companyProducts &&
+                companyProducts.map((product) => (
+                  <button
+                    type="button"
+                    onClick={() => setProductId(product.id)}
+                    className={` relative p-2 rounded-md transition ${productId === product.id ? "ring-2 ring-green-500 " : "hover:shadow-lg bg-gray-700/50"}`}
+                  >
+                    {/* Check Icon */}
+                    {productId === product.id && (
+                      <CheckCircleIcon className="text-green-500 size-6 absolute right-2 top-2" />
+                    )}
 
-          {/* Product Cards */}
-          <div className="grid grid-cols-2 gap-4">
-            {companyProducts &&
-              companyProducts.map((product) => (
-                <button
-                  type="button"
-                  onClick={() => setProductId(product.id)}
-                  className={`rounded-lg relative p-3 flex flex-col items-center text-center transition ${productId === product.id ? "ring-2 ring-green-500 bg-gray-700" : "hover:shadow-lg bg-gray-700/50"}`}
-                >
-                  {/* Check Icon */}
-                  {productId === product.id && (
-                    <CheckCircleIcon className="text-green-500 size-6 absolute right-2 top-2" />
-                  )}
-
-                  {/* Product Image */}
-                  <ImageComponent product={product} />
-                  {/* Product Name */}
-                  <div className="text-white font-medium">{product.name}</div>
-                </button>
-              ))}
+                    {/* Product Image */}
+                    <ImageComponent product={product} />
+                    {/* Product Name */}
+                    <div className='flex flex-col items-start'>
+                      <div className="text-white text-sm font-light">{product.name} </div>
+                      <div className="text-white font-bold text-md">K {product.price.toFixed(2)}</div>
+                    </div>
+                  </button>
+                ))}
+            </div>
           </div>
-
-          {/* Footer buttons */}
-          <div className="flex mt-6">
-            <button
-              onClick={() => setOpenProductCard(false)}
-              className="w-full py-3 px-3 rounded-s-md font-bold transition-colors duration-300 bg-[#00b4d8] text-[#0d1b2a] hover:bg-[#009ac1] cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => setOpenProductCard(false)}
-              className="w-full py-3 px-3 rounded-e-md font-bold transition-colors duration-300 bg-[#00b4d8] text-[#0d1b2a] hover:bg-[#009ac1] cursor-pointer"
-            >
-              Complete
-            </button>
-          </div>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     );
   };
 
 
   return (
-    <div className="bg-gray-800 text-white font-sans py-20 min-h-screen m-0 flex justify-center items-center">
+    <div className="bg-gray-800 text-white font-sans py-20 min-h-screen m-0 flex justify-center items-center z-[99999]">
       {!companyProducts ?
         <div style={spinnerStyle}>Loading products...</div>
         :
@@ -386,14 +376,7 @@ const ProductSelectionForm = () => {
                   ''
                 }
 
-                {
-                  openProductCard ?
-                    <>
-                      <ProductPopUp setProductId={setProductId} />
-                    </>
-                    :
-                    <></>
-                }
+                <ProductPopUp open={openProductCard} onClose={() => setOpenProductCard(false)} setProductId={setProductId} />
 
                 <label htmlFor="quantity" className="block mt-4 mb-1 font-bold text-[#e0f7fa]">
                   Quantity
@@ -444,7 +427,7 @@ const ProductSelectionForm = () => {
                   {selectedImages.length > 0 && (
                     <div className="flex gap-4">
                       {selectedImages.map((img, index) => (
-                        <div key={index} className="relative grow gap-4 border rounded overflow-hidden">
+                        <div key={index} className=" grow gap-4 border rounded overflow-hidden">
                           <img
                             src={img.url}
                             alt={img.name}

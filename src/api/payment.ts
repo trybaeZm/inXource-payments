@@ -59,7 +59,7 @@ class Payment {
   async getProductInfoByBusiness(business_id: string) {
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, price, partialPayment")
+      .select("id, name, price, partialPayment, imageName")
       .eq("int_business_id", business_id);
 
     if (error) {
@@ -333,48 +333,34 @@ class Payment {
 
   // Get all images for a specific product
 
-  getProductImages = async (productId: string): Promise<string[] | null> => {
-    console.log(productId)
 
 
-    const { data, error } = await supabase
-      .storage
-      .from('uploaded-files')
-      .list(`products/${productId}`, {
-        limit: 100,
-        offset: 0,
-        sortBy: { column: 'name', order: 'asc' }
-      });
 
-    return new Promise((resolve, reject) => {
-      try {
+  getProductImages = async (
+    productId: string,
+    fileName: string
+  ): Promise<string | null> => {
+    try {
+      const filePath = `products/${productId}/${fileName}`;
 
-        if (error) {
-          console.error("Error fetching product images:", error);
-          reject(error);
-        }
+      const { data } = supabase.storage
+        .from("uploaded-files")
+        .getPublicUrl(filePath);
 
-        if (data) {
-          const imageUrls = data.map(file =>
-            supabase.storage
-              .from('uploaded-files')
-              .getPublicUrl(`products/${productId}/${file.name}`)
-              .data.publicUrl
-          );
-          resolve(imageUrls);
-        }
-
-        else {
-          console.warn("No images found for product:", productId);
-          resolve([]);
-        }
-      } catch (error) {
-        console.error("Error fetching product images:", error);
-        reject(error);
+      if (!data) {
+        console.error("Error fetching product images:");
+        return null;
       }
-    })
-  }
+      return data.publicUrl ?? null;
+
+    } catch (error) {
+      console.error("Unexpected error fetching product images:", error);
+      return null;
+    }
+  };
 
 }
+
+
 
 export default new Payment();
