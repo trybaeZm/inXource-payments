@@ -48,6 +48,8 @@ const PhoneVerification = () => {
     } finally {
       setLoadingCompany(false);
     }
+    
+    /* eslint-disable react-hooks/exhaustive-deps */
   }, [id]);
 
   useEffect(() => {
@@ -136,7 +138,7 @@ const PhoneVerification = () => {
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="e.g. 0977123456"
                       required
-                      className="w-full px-4 py-3 border border-gray-300 text-black rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="w-full px-4 py-3 border border-gray-300 text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                   </div>
                   <button

@@ -96,6 +96,7 @@ const ProductSelectionForm = () => {
 
   useEffect(() => {
     fetchCompanyProduct()
+    /* eslint-disable react-hooks/exhaustive-deps */
   }, []);
 
   const [formData, setFormData] = useState({
@@ -295,20 +296,24 @@ const ProductSelectionForm = () => {
   const ProductPopUp = ({ setProductId, open, onClose }: { setProductId: (id: string) => void, open: boolean, onClose: () => void }) => {
     return (
       <Dialog open={open} onOpenChange={(isOpen: boolean) => !isOpen && onClose()}>
-        <DialogContent className="w-full text-gray-200  overflow-y-auto z-[9999] bg-gray-800 rounded-lg shadow-lg p-6">
+        <DialogContent className="w-full text-gray-200 overflow-y-auto z-[9999] bg-gray-800 rounded-lg shadow-lg p-6">
           <DialogHeader>
             <DialogTitle className="">
               Select Product
             </DialogTitle>
           </DialogHeader>
-          <div className='h-full overflow-y-auto max-h-[800px]'>
+          <div className=' h-full overflow-y-auto max-h-[600px]'>
             {/* Product Cards */}
             <div className="grid p-5 lg:grid-cols-3 md:grid-cols-6 sm:grid-cols-4 grid-cols-1 gap-4">
               {companyProducts &&
                 companyProducts.map((product) => (
                   <button
                     type="button"
-                    onClick={() => setProductId(product.id)}
+                    onClick={() => {
+                      setProductId(product.id); 
+                      onClose()
+                    }
+                    }
                     className={` relative p-2 rounded-md transition ${productId === product.id ? "ring-2 ring-green-500 " : "hover:shadow-lg bg-gray-700/50"}`}
                   >
                     {/* Check Icon */}
