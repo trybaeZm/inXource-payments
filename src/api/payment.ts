@@ -1,9 +1,10 @@
 import { supabase } from "../services/supabaseClient";
 import Swal from "sweetalert2";
-import type { CustomerType, payloadType, selectedImagesType } from "../types/types";
+import type { CustomerType, FormData, payloadType, PaymentStatusData, ResponseFromPayApi, selectedImagesType } from "../types/types";
+import axios from "axios";
 
 const paymentUrl = "https://paymentbackend.inxource.com/api/payment";
-// const paymentUrl = "http://localhost:4455/api/payment";
+// const paymentUrl = "http://localhost:8080/api/payment";
 
 class Payment {
 
@@ -80,7 +81,7 @@ class Payment {
             .select("*")
             .eq("phone", phone)
             .eq("business_id", intBusinessId)
-            .maybeSingle();
+            .single();
 
           if (data) {
             console.log("Customer data:", data);
@@ -114,9 +115,11 @@ class Payment {
       partialAmountTotal: payload.totalPartialPrice,
       order_status: "pending",
       order_payment_status: "pending",
+      orderToken: payload.token,
       product_id: payload.items.product_id,
       delivery_location: payload?.formData.location || null,
-      sammarized_notes: payload?.formData.sammarized_notes
+      sammarized_notes: payload?.formData.sammarized_notes,
+      transaction_id: payload?.transactionId || null,
     };
 
     try {
@@ -217,7 +220,7 @@ class Payment {
     const { data, error } = await supabase
       .from('orders')
       .update({ order_payment_status: 'completed' })
-      .eq('id', id);
+      .eq('transaction_id', id);
 
     // If Supabase tells you there was an error, throw it so callers can catch
     if (error) {
@@ -235,13 +238,19 @@ class Payment {
     return true;
   }
 
-  async createTransaction(id: string, quantity: number): Promise<{ token: string }> {
+  async createTransaction(
+    id: string,
+    quantity: FormData,
+  ): Promise<{ data: ResponseFromPayApi | null; error: string | null }> {
     console.log("Creating transaction...");
+    console.log("payload", quantity);
 
     try {
       const { data, error } = await supabase
         .from("products")
         .select(`
+        partialPayment,
+        name,
         id,
         orders(quantity),
         stock_table(quantity)
@@ -250,61 +259,64 @@ class Payment {
         .single();
 
       if (error) throw error;
-
       if (!data) throw new Error("Product not found");
 
       // Sum up stock quantities
-      const stockIn = data.stock_table?.reduce((acc, cur) => acc + (cur.quantity || 0), 0) || 0;
+      const stockIn =
+        data.stock_table?.reduce((acc, cur) => acc + (cur.quantity || 0), 0) || 0;
 
       // Sum up order quantities
-      const stockOut = data.orders?.reduce((acc, cur) => acc + (cur.quantity || 0), 0) || 0;
+      const stockOut =
+        data.orders?.reduce((acc, cur) => acc + (cur.quantity || 0), 0) || 0;
 
       // Remaining stock
       const totalStockRemaining = stockIn - stockOut;
 
-      if (totalStockRemaining >= quantity) {
-        console.log("Purchase can proceed");
-
-        const apiUrl = paymentUrl + "/getToken";
-        const response = await fetch(apiUrl, {
-          method: "POST",
-        });
-
-        if (!response.ok) {
-          throw new Error(`Payment API failed: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result; // should include { token: string }
-      } else {
+      if (totalStockRemaining < quantity.quantity) {
         Swal.fire("Out of Stock", "Not enough stock available!", "error");
         throw new Error("Insufficient stock");
       }
-    } catch (err) {
+
+      console.log("Purchase can proceed");
+      const apiUrl = paymentUrl + "/getToken";
+
+      const description = "payment for " + data.name;
+      const amount = data.partialPayment * quantity.quantity;
+
+      // console.log("description", description);
+      // console.log("amount", amount);
+
+      // ✅ Await axios response
+      const res = await axios.post(apiUrl, {
+        description,
+        amount,
+      });
+
+      if (res.status !== 200) {
+        throw new Error(`Payment API failed: ${res.status}`);
+      }
+
+      console.log("res", res.data);
+
+      // Return token data
+      return { data: res.data, error: null };
+
+    } catch (err: any) {
       console.error("Error in createTransaction:", err);
-      throw err;
+      return { data: null, error: err.message || "Unknown error" };
     }
   }
 
   async processPayment({ payload, selectedImages }: { payload: payloadType, selectedImages: selectedImagesType[] }) {
     const orderResponse = await this.saveOrder({ payload, selectedImages })
+
     if (orderResponse) {
       console.log("Processing payment with payload:", payload);
 
-      const [firstName = "", ...rest] = (payload?.userDetails?.name || "").split(" ");
-      const lastName = rest.join(" ");
-
       const preparedPayload = {
-        description: "test payment",
-        customerFirstName: firstName,
-        customerLastName: lastName,
-        email: payload?.userDetails?.email,
         phoneNumber: payload?.userDetails?.phone,
-        amount: payload.totalAmount,
-        partialAmount: payload.totalPartialPrice,
         order_id: orderResponse.id
       };
-
 
       try {
         const response = await fetch(`${paymentUrl}/initiatePayment`, {
@@ -328,14 +340,46 @@ class Payment {
         throw error;
       }
     }
-
   }
 
+  async openPaymentWindow(url: string | undefined): Promise<any> {
+  if (!url) return null;
+
+  // 🔗 Open in a new tab/window
+  const newWindow = window.open(url, "_blank");
+
+  if (!newWindow) {
+    alert("Popup blocked! Please allow popups for this site.");
+    return null;
+  }
+
+  // ✅ Return a promise that resolves when the new window sends back a message
+  return new Promise((resolve, reject) => {
+    const listener = (event: MessageEvent) => {
+      // Security: restrict origin
+      if (event.origin !== "https://your-auth-or-payment-page.com") return;
+
+      resolve(event.data); // e.g. { success: true, token: "..." }
+      window.removeEventListener("message", listener);
+      newWindow.close();
+    };
+
+    window.addEventListener("message", listener);
+
+    // Optional: detect if user closes the tab/window without finishing
+    const timer = setInterval(() => {
+      if (newWindow.closed) {
+        clearInterval(timer);
+        reject(new Error("Payment window closed by user"));
+        window.removeEventListener("message", listener);
+      }
+    }, 500);
+  });
+}
+
+
+
   // Get all images for a specific product
-
-
-
-
   getProductImages = async (
     productId: string,
     fileName: string
@@ -358,6 +402,31 @@ class Payment {
       return null;
     }
   };
+
+  // Check payment status
+  async checkPaymentStatus(orderId: string): Promise<{ data: PaymentStatusData | null; error: boolean | null }> {
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch(`${paymentUrl}/checkPayment`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ordertoken: orderId }),
+        });
+
+        return response.json().then((data) => {
+          resolve({ data, error: null });
+        });
+
+      } catch (error: unknown) {
+        console.error("Error checking payment status:", error);
+        reject({ data: null, error: (error as Error).message || "Unknown error" });
+      }
+    })
+  }
+
 
 }
 

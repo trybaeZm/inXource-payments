@@ -75,7 +75,7 @@ const PhoneVerification = () => {
       intBusinessId: companyInfo.id
     })
       .then((data) => {
-        // console.log('userdata:', data)
+        console.log('userdata:', data)
         if (data) {
           navigation('/payment/product', { state: { data } });
         } else {

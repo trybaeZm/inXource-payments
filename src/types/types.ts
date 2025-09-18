@@ -23,7 +23,8 @@ export type companyInfoType = {
     business_name: string
 }
 export type payloadType = {
-    totalAmount:number;
+    transactionId?: string
+    totalAmount: number;
     userDetails: userTypes
     formData: {
         sammarized_notes: string
@@ -36,7 +37,7 @@ export type payloadType = {
         quantity: number
         price: number
     }
-    token: string
+    token: string | undefined
 }
 
 export type selectedImagesType = {
@@ -47,7 +48,7 @@ export type selectedImagesType = {
 
 export type companyProductsType = {
     name: string
-    imageName:string
+    imageName: string
     price: number
     id: string
     partialPayment: number
@@ -68,10 +69,48 @@ export type OrderType = {
 
 export type PaymentReturnType = {
     success: string;
-    paymentStatus:  paymentStatus
+    paymentStatus: paymentStatus
     data: string
 }
 
 export type paymentStatus = {
     status: string
+}
+
+export type FormData = {
+    location: string
+    productId: string
+    quantity: number
+    summarized_notes: string
+}
+
+
+export type ResponseFromPayApi = {
+    orderNumber: string,
+    data:{
+    token: string,
+    paymentLink: string,
+    transaction: {
+        base_amount: number,
+        currency: string
+    },
+}}
+
+export interface PaymentStatusData {
+    success: boolean; // e.g. "true"
+    paymentStatus: {
+        data:
+        {
+            status: number; // e.g. 101
+            message: string; // e.g. "Payment token is still pending."
+            token: string; // e.g. "F1C8095A"
+            orderNumber: string; // e.g. "912670"
+            transactionReference: string; // e.g. "407d4845-9584-4ff2-8dcc-886c38"
+            amount: string; // e.g. "1.00"
+            currency: string; // e.g. "ZMW"
+            paymentMethod: string | null; // can be null
+            serviceProvider: string | null; // can be null
+            account: string | null; // can be null}
+        }
+    }
 }

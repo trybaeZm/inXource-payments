@@ -3,6 +3,7 @@ import PayForm from './Pages/PayForm'
 import CustomerInfoForm from './Pages/CustomerInfo';
 import ProductSelectionForm from './Pages/ProductForm';
 import { Route, Routes } from 'react-router-dom';
+import PayStatus from './Pages/PayStatus';
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
         <Route path="/payment" element={<PayForm />} />
         <Route path="/payment/info" element={<CustomerInfoForm />} />
         <Route path="/payment/product" element={<ProductSelectionForm />} />
+        <Route path="/payment/status/:id" element={<PayStatus />} />
       </Routes>
   );
 }

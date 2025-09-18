@@ -11,7 +11,7 @@ import PaymentService from '../api/payment';
 // Removed next/image import since it's not available in this project.
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import type { companyProductsType, payloadType, PaymentReturnType, selectedImagesType, userTypes } from '../types/types';
+import type { companyProductsType, FormData, payloadType, selectedImagesType, userTypes } from '../types/types';
 
 const spinnerStyle = {
   display: 'flex',
@@ -44,7 +44,6 @@ const ProductSelectionForm = () => {
       fileInputRef.current.click();
     }
   };
-
 
   interface ImageFile {
     name: string;
@@ -131,39 +130,15 @@ const ProductSelectionForm = () => {
     const userDetails: userTypes = location.state?.data;
     console.log('User Details:', userDetails);
 
-    const selectedProduct = companyProducts?.find(
-      (p) => p.id.toString() === formData.productId
-    );
 
 
-
-    PaymentService.createTransaction(productId, parseInt(formData.quantity))
+    PaymentService.createTransaction(productId, formData as unknown as FormData,)
       .then((response) => {
-
-
-        console.log('Transaction Response:', response);
-
+        console.log('Transaction Response:', response.data);
 
         console.log(loading)
 
         if (response) {
-          const payload: payloadType = {
-            totalAmount: parseFloat(formData.quantity) * (companyProducts?.find((e) => e.id === productId)?.price || 0) || 0,
-            totalPartialPrice: parseFloat(formData.quantity) * (companyProducts?.find((e) => e.id === productId)?.partialPayment || 0) || 0,
-            userDetails: userDetails,
-            token: response.token,
-            formData: {
-              location: formData.location,
-              sammarized_notes: formData.summarized_notes
-            },
-            items: {
-              orderId: '', // Set this if you have an orderId, otherwise leave as empty string or generate appropriately
-              product_id: productId,
-              quantity: parseFloat(formData.quantity),
-              price: selectedProduct?.price ?? 0,
-            },
-          };
-          console.log("payload: ", payload)
 
           setLoading(false);
           // setUploadLoading(false)
@@ -173,48 +148,79 @@ const ProductSelectionForm = () => {
          <p><strong>Quantity:</strong> ${formData.quantity}</p>
          <p><strong>Total amount Payable:</strong> ZMW ${(parseFloat(formData.quantity) * (companyProducts?.find((e) => e.id === productId)?.partialPayment || 0) || 0).toFixed(2)}</p> 
          <p>User is required to inipayment of above amount and the rest upon completion of service and or delivery</p>`
-
             ,
             icon: 'info',
             showCancelButton: true,
-            confirmButtonText: 'Place Order',
+            confirmButtonText: 'Proceed to Pay',
             showLoaderOnConfirm: true,
             allowOutsideClick: () => !Swal.isLoading(),
             preConfirm: async (): Promise<void> => {
               try {
                 setUploadLoading(false)
                 setLoadingConfirmation(true);
+                console.log("response from transaction", response.data?.data.paymentLink)
+                let payload: payloadType = {
+                  totalAmount: parseFloat(formData.quantity) * (companyProducts?.find((e) => e.id === productId)?.price || 0) || 0,
+                  userDetails: userDetails as userTypes,
+                  formData: {
+                    sammarized_notes: formData.summarized_notes,
+                    location: formData.location
+                  },
+                  totalPartialPrice: parseFloat(formData.quantity) * (companyProducts?.find((e) => e.id === productId)?.partialPayment || 0) || 0,
+                  items: {
+                    orderId: '', // This will be set by the backend;
+                    product_id: productId,
+                    quantity: parseInt(formData.quantity) || 0,
+                    price: companyProducts?.find((e) => e.id === productId)?.partialPayment || 0,
 
-                // initiate payment here
-                PaymentService.processPayment({ payload, selectedImages })
-                  .then(async (res: PaymentReturnType) => {
-                    console.log("data form api:", res);
+                  },
+                  transactionId: response.data?.orderNumber,
+                  token: response.data?.data.token, // This will be set by the backend
+                }
 
-                    if (res.paymentStatus.status == 'success') {
-                      const orderResponse = await PaymentService.updateSaveStatus(res.data);
-                      if (orderResponse) {
-                        Swal.fire({ title: 'Success', html: 'Order placed successfully!', icon: 'success', confirmButtonText: 'Ok', preConfirm: () => navigation('/') });
-                      } else {
-                        setLoadingConfirmation(false);
-                        Swal.fire('Error', 'Failed to save order for some unknown reason', 'error');
-                      }
-                    }
-                    else if (res.paymentStatus.status == 'failed') {
-                      setLoadingConfirmation(false);
-                      Swal.fire('Error', 'Payment failed. Please try again.', 'error');
-                    }
+
+                const orderResponse = await PaymentService.saveOrder({ payload, selectedImages })
+                if (orderResponse) {
+                  console.log("order saved successfully", orderResponse)
+                }
+
+
+                PaymentService.openPaymentWindow(response.data?.data.paymentLink)
+                  .then(() => {
+                    setLoadingConfirmation(false);
+                    setTimeout(() => navigation('/'), 2000);
                   })
 
-                  .catch((error) => {
-                    setLoadingConfirmation(false);
-                    console.error('Error processing payment:', error);
-                    Swal.fire('Error', 'Payment processing failed. Please try again.', 'error');
-                  }
-                  )
-                  .finally(() => {
-                    setLoadingConfirmation(false);
-                    setLoading(false);
-                  });
+                // // initiate payment here
+                // PaymentService.processPayment({ payload, selectedImages })
+                //   .then(async (res: PaymentReturnType) => {
+                //     console.log("data form api:", res);
+
+                //     if (res.paymentStatus.status == 'success') {
+                //       const orderResponse = await PaymentService.updateSaveStatus(res.data);
+                //       if (orderResponse) {
+                //         Swal.fire({ title: 'Success', html: 'Order placed successfully!', icon: 'success', confirmButtonText: 'Ok', preConfirm: () => navigation('/') });
+                //       } else {
+                //         setLoadingConfirmation(false);
+                //         Swal.fire('Error', 'Failed to save order for some unknown reason', 'error');
+                //       }
+                //     }
+                //     else if (res.paymentStatus.status == 'failed') {
+                //       setLoadingConfirmation(false);
+                //       Swal.fire('Error', 'Payment failed. Please try again.', 'error');
+                //     }
+                //   })
+
+                //   .catch((error) => {
+                //     setLoadingConfirmation(false);
+                //     console.error('Error processing payment:', error);
+                //     Swal.fire('Error', 'Payment processing failed. Please try again.', 'error');
+                //   }
+                //   )
+                //   .finally(() => {
+                //     setLoadingConfirmation(false);
+                //     setLoading(false);
+                //   });
 
               } catch (error: unknown) {
                 setLoadingConfirmation(false);
@@ -310,7 +316,7 @@ const ProductSelectionForm = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      setProductId(product.id); 
+                      setProductId(product.id);
                       onClose()
                     }
                     }
