@@ -1,11 +1,19 @@
-.hero_section{
-    height: 100vh;
-    display: flex;
-    padding: 0 8rem;
+/* styles/hero.css */
+.hero_section {
+  position: relative;
+  overflow: hidden;
 }
 
-.left_class{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+/* Optional: Add these styles if you want to enhance the visual effects */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.floating-element {
+  animation: float 6s ease-in-out infinite;
 }

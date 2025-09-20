@@ -215,27 +215,46 @@ class Payment {
     }
   }
 
-  async updateSaveStatus(id: string): Promise<boolean> {
+  async updateSaveStatus(orderToken: string | undefined): Promise<boolean> {
+    console.log("Updating order status for id:", orderToken);
     // Fire the update call
-    const { data, error } = await supabase
-      .from('orders')
-      .update({ order_payment_status: 'completed' })
-      .eq('transaction_id', id);
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .update({ order_payment_status: 'completed' }) // 👈 pass an object
+          .eq('transaction_id', orderToken)
+          .select();
 
-    // If Supabase tells you there was an error, throw it so callers can catch
-    if (error) {
-      console.error("Failed to update order status:", error);
-      throw error;
-    }
+        console.log("Update response:", { data, error });
 
-    // Optionally, check that data is non-empty
-    if (!data) {
-      console.warn("No rows were updated for id:", id);
-      return false;
-    }
 
-    console.log("Update success for order id:", id, data);
-    return true;
+        // If Supabase tells you there was an error, throw it so callers can catch
+        if (error) {
+          console.error("Failed to update order status:", error);
+          reject(false)
+        }
+
+        // Optionally, check that data is non-empty
+        if (!data) {
+          console.warn("No rows were updated for id:", orderToken);
+          reject(false)
+        }
+
+        if (data) {
+          console.log("rows updated for id:", orderToken);
+          resolve(true)
+        }
+
+        console.log("Update success for order id:", orderToken, data);
+
+        reject(false);
+
+      } catch (err) {
+        console.error("Error updating order status:", err);
+        reject(false)
+      }
+    });
   }
 
   async createTransaction(
@@ -342,40 +361,12 @@ class Payment {
     }
   }
 
-  async openPaymentWindow(url: string | undefined): Promise<any> {
-  if (!url) return null;
+  redirectToPayment(url: string | undefined): void {
+    if (!url) return;
 
-  // 🔗 Open in a new tab/window
-  const newWindow = window.open(url, "_blank");
-
-  if (!newWindow) {
-    alert("Popup blocked! Please allow popups for this site.");
-    return null;
+    // 🔗 Redirects the current tab to the payment URL
+    window.location.href = url;
   }
-
-  // ✅ Return a promise that resolves when the new window sends back a message
-  return new Promise((resolve, reject) => {
-    const listener = (event: MessageEvent) => {
-      // Security: restrict origin
-      if (event.origin !== "https://your-auth-or-payment-page.com") return;
-
-      resolve(event.data); // e.g. { success: true, token: "..." }
-      window.removeEventListener("message", listener);
-      newWindow.close();
-    };
-
-    window.addEventListener("message", listener);
-
-    // Optional: detect if user closes the tab/window without finishing
-    const timer = setInterval(() => {
-      if (newWindow.closed) {
-        clearInterval(timer);
-        reject(new Error("Payment window closed by user"));
-        window.removeEventListener("message", listener);
-      }
-    }, 500);
-  });
-}
 
 
 
@@ -404,7 +395,7 @@ class Payment {
   };
 
   // Check payment status
-  async checkPaymentStatus(orderId: string): Promise<{ data: PaymentStatusData | null; error: boolean | null }> {
+  async checkPaymentStatus(orderId: string | undefined): Promise<{ data: PaymentStatusData | null; error: boolean | null }> {
 
     return new Promise(async (resolve, reject) => {
       try {

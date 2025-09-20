@@ -97,20 +97,8 @@ export type ResponseFromPayApi = {
 }}
 
 export interface PaymentStatusData {
-    success: boolean; // e.g. "true"
     paymentStatus: {
-        data:
-        {
-            status: number; // e.g. 101
-            message: string; // e.g. "Payment token is still pending."
-            token: string; // e.g. "F1C8095A"
-            orderNumber: string; // e.g. "912670"
-            transactionReference: string; // e.g. "407d4845-9584-4ff2-8dcc-886c38"
-            amount: string; // e.g. "1.00"
-            currency: string; // e.g. "ZMW"
-            paymentMethod: string | null; // can be null
-            serviceProvider: string | null; // can be null
-            account: string | null; // can be null}
-        }
-    }
-}
+      responsecode: number;
+      responsemessage: string;
+    };
+  }
