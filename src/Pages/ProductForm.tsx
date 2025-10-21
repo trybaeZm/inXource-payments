@@ -8,13 +8,13 @@ import {
   DialogTitle,
 } from "../Components/ui/dialog"
 import PaymentService from '../api/payment';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import type { companyProductsType, FormData, payloadType, selectedImagesType, userTypes } from '../types/types';
+import { getSubhistory } from '../services/subscription';
 
 const ProductSelectionForm = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [companyProducts, setCompanyProducts] = useState<companyProductsType[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -77,6 +77,7 @@ const ProductSelectionForm = () => {
 
   useEffect(() => {
     fetchCompanyProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Form state and handlers
@@ -101,14 +102,25 @@ const ProductSelectionForm = () => {
   };
 
   const calculatePartial = () => {
-    if (!selectedProduct || !formData.quantity) return 0;
-    return parseFloat(formData.quantity) * selectedProduct.partialPayment;
+    getSubhistory(company.id)
+      .then((res) => {
+        if (res) {
+          if (res.haveWallet) {
+            if (!selectedProduct || !formData.quantity) return 0;
+            return parseFloat(formData.quantity) * selectedProduct.partialPayment;
+          } else {
+            return 0;
+          }
+        }
+      })
+
+    return 0
   };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    
+
     if (!productId) {
       Swal.fire('Selection Required', 'Please select a product to continue', 'warning');
       return;
@@ -120,7 +132,7 @@ const ProductSelectionForm = () => {
 
     try {
       const response = await PaymentService.createTransaction(productId, formData as unknown as FormData);
-      
+
       if (response) {
         Swal.fire({
           title: 'Confirm Order',
@@ -141,8 +153,8 @@ const ProductSelectionForm = () => {
           preConfirm: async (): Promise<void> => {
             try {
               setLoadingConfirmation(true);
-              
-              let payload: payloadType = {
+
+              const payload: payloadType = {
                 totalAmount: calculateTotal(),
                 userDetails: userDetails as userTypes,
                 formData: {
@@ -160,12 +172,19 @@ const ProductSelectionForm = () => {
                 token: response.data?.data.token,
               };
 
-              const orderResponse = await PaymentService.saveOrder({ payload, selectedImages });
+              const haveWallet = await getSubhistory(company.id)
+
+              const orderResponse = await PaymentService.saveOrder({ payload, selectedImages, hasWallet: haveWallet?.haveWallet });
               if (orderResponse) {
                 console.log("Order saved successfully", orderResponse);
               }
 
-              PaymentService.redirectToPayment(response.data?.data.paymentLink);
+              if (haveWallet?.haveWallet) {
+                PaymentService.redirectToPayment(response.data?.data.paymentLink,);
+              } else {
+                PaymentService.redirectToPayment('/');
+              }
+
             } catch (error: unknown) {
               console.log('Payment Error:', error);
               throw new Error('Payment processing failed');
@@ -249,18 +268,17 @@ const ProductSelectionForm = () => {
                     setFormData(prev => ({ ...prev, productId: product.id }));
                     onClose();
                   }}
-                  className={`relative p-4 rounded-lg transition-all duration-200 ${
-                    productId === product.id 
-                      ? "ring-2 ring-blue-500 bg-blue-500/10" 
-                      : "bg-gray-700/50 hover:bg-gray-700/80"
-                  }`}
+                  className={`relative p-4 rounded-lg transition-all duration-200 ${productId === product.id
+                    ? "ring-2 ring-blue-500 bg-blue-500/10"
+                    : "bg-gray-700/50 hover:bg-gray-700/80"
+                    }`}
                 >
                   {productId === product.id && (
                     <CheckCircleIcon className="text-blue-500 size-6 absolute right-3 top-3" />
                   )}
 
                   <ImageComponent product={product} />
-                  
+
                   <div className="flex flex-col items-start mt-3">
                     <div className="text-white text-sm font-medium truncate w-full">{product.name}</div>
                     <div className="flex justify-between w-full mt-1">
@@ -320,26 +338,26 @@ const ProductSelectionForm = () => {
                 <label className="block text-gray-200 font-medium mb-2">
                   Select Product *
                 </label>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setOpenProductCard(true)}
                   className="w-full p-4 border border-gray-600 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors flex items-center justify-between"
                 >
                   <div className="flex items-center">
                     <ShoppingCartIcon className="w-5 h-5 text-blue-400 mr-2" />
                     <span>
-                      {selectedProduct 
-                        ? selectedProduct.name 
+                      {selectedProduct
+                        ? selectedProduct.name
                         : "Choose a product"
                       }
                     </span>
                   </div>
                   <span className="text-gray-400 text-sm">Click to select</span>
                 </button>
-                
-                <ProductPopup 
-                  open={openProductCard} 
-                  onClose={() => setOpenProductCard(false)} 
+
+                <ProductPopup
+                  open={openProductCard}
+                  onClose={() => setOpenProductCard(false)}
                 />
 
                 {selectedProduct && (
@@ -348,7 +366,7 @@ const ProductSelectionForm = () => {
                       <p className="text-white font-medium">{selectedProduct.name}</p>
                       <p className="text-gray-400 text-sm">ZMW {selectedProduct.price.toFixed(2)} each</p>
                     </div>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => {
                         setProductId('');
@@ -386,7 +404,7 @@ const ProductSelectionForm = () => {
                   Product Images (Optional)
                 </label>
                 <p className="text-gray-400 text-sm mb-3">Upload up to 3 images for reference</p>
-                
+
                 <input
                   type="file"
                   accept="image/*"
@@ -395,7 +413,7 @@ const ProductSelectionForm = () => {
                   onChange={handleFilesChange}
                   className="hidden"
                 />
-                
+
                 <div className="grid grid-cols-3 gap-3 mb-3">
                   {selectedImages.map((img, index) => (
                     <div key={index} className="relative group">
@@ -413,7 +431,7 @@ const ProductSelectionForm = () => {
                       </button>
                     </div>
                   ))}
-                  
+
                   {selectedImages.length < 3 && (
                     <div
                       onClick={handleDivClick}
@@ -491,11 +509,10 @@ const ProductSelectionForm = () => {
               <button
                 type="submit"
                 disabled={uploadLoading || !productId}
-                className={`w-full py-3 rounded-lg font-semibold transition-colors duration-300 ${
-                  uploadLoading || !productId
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-500 cursor-pointer'
-                }`}
+                className={`w-full py-3 rounded-lg font-semibold transition-colors duration-300 ${uploadLoading || !productId
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-500 cursor-pointer'
+                  }`}
               >
                 {uploadLoading ? (
                   <span className="flex items-center justify-center">

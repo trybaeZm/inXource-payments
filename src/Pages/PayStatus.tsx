@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle2, XCircle, Hourglass, ArrowLeft, CreditCard, AlertCircle } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PaymentService from "../api/payment";
+import { StatusPayload } from "../types/types";
+
 
 
 
@@ -13,12 +15,17 @@ type UIStatus = "loading" | "success" | "failed" | "pending";
 
 const PayStatus: React.FC = () => {
   const [status, setStatus] = useState<UIStatus>("loading");
-  const [paymentDetails, setPaymentDetails] = useState<any>(null);
+  const [paymentDetails, setPaymentDetails] = useState<StatusPayload | null | undefined>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const navigation = useNavigate();
   const { id } = useParams<{ id: string }>();
   const retries = useRef(0);
   const maxRetries = 15; // ~30s if polling every 2s
+
+  const [searchParams] = useSearchParams();
+
+  const invoiceId = searchParams.get("bb_invoice_id");
+  const token = searchParams.get("token");
 
 
 
@@ -27,12 +34,13 @@ const PayStatus: React.FC = () => {
     if (!id) return;
 
     try {
-      console.log("Checking payment status for id:", id);
+      console.log("Checking payment status for id:", invoiceId);
 
-      let data = await PaymentService.checkPaymentStatus(id);
-      setPaymentDetails(data.data);
+      const data = await PaymentService.checkPaymentStatus(token);
+      
+      setPaymentDetails(data.data?.payload);
 
-      let statusCode = data.data?.paymentStatus?.responsecode;
+      const statusCode = data.data?.paymentStatus?.responsecode;
 
       console.log("Payment status code:", statusCode);
 
@@ -46,7 +54,7 @@ const PayStatus: React.FC = () => {
           setErrorMessage("Payment verification timed out. Please contact support.");
         }
       } else if (statusCode === 100) {
-        PaymentService.updateSaveStatus(id)
+        PaymentService.updateSaveStatus(invoiceId)
           .then((res) => {
             if (res) {
               setStatus("success");
@@ -61,15 +69,16 @@ const PayStatus: React.FC = () => {
         setStatus("failed");
         setErrorMessage(data.data?.paymentStatus?.responsemessage || "Payment failed");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching payment status:", error);
       setStatus("failed");
-      setErrorMessage(error.message || "An unexpected error occurred");
+      setErrorMessage( "An unexpected error occurred");
     }
   };
 
   useEffect(() => {
     fetchPaymentStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getStatusConfig = (status: UIStatus) => {
@@ -148,8 +157,8 @@ const PayStatus: React.FC = () => {
                 statusConfig.icon
               )}
             </motion.div>
-            
-            <motion.h2 
+
+            <motion.h2
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -157,8 +166,8 @@ const PayStatus: React.FC = () => {
             >
               {statusConfig.title}
             </motion.h2>
-            
-            <motion.p 
+
+            <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}

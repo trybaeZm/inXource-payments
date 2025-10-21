@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowDownIcon, ShieldCheckIcon, BoltIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import {  ShieldCheckIcon, BoltIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import '../styles/hero.css';
 
 const Hero = () => {

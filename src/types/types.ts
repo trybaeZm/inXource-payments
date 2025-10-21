@@ -87,18 +87,34 @@ export type FormData = {
 
 export type ResponseFromPayApi = {
     orderNumber: string,
-    data:{
-    token: string,
-    paymentLink: string,
-    transaction: {
-        base_amount: number,
-        currency: string
-    },
-}}
+    data: {
+        token: string,
+        paymentLink: string,
+        transaction: {
+            base_amount: number,
+            currency: string
+        },
+    }
+}
+
+export type StatusPayload = {
+    amount: number,
+    paymentMethod: string
+}
 
 export interface PaymentStatusData {
+    payload: StatusPayload
     paymentStatus: {
-      responsecode: number;
-      responsemessage: string;
+        responsecode: number;
+        responsemessage: string;
     };
-  }
+}
+
+export interface SubscriptionHistory {
+    haveWallet: boolean
+}
+
+export type PaymentData = {
+    paymentMethod: string
+    amount: string
+}
