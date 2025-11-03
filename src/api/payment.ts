@@ -252,70 +252,47 @@ class Payment {
   }
 
   async createTransaction(
-    id: string,
-    quantity: FormData,
+    id?: string,
   ): Promise<{ data: ResponseFromPayApi | null }> {
     console.log("Creating transaction...");
-    console.log("payload", quantity);
 
     try {
       const { data, error } = await supabase
-        .from("products")
-        .select(`
-        partialPayment,
-        name,
-        id,
-        orders(quantity),
-        stock_table(quantity)
-      `)
+        .from("orders")
+        .select("*")
         .eq("id", id)
-        .single();
+        .single()
+        
+      if (data) {
+        console.log("Purchase can proceed");
+        const apiUrl = paymentUrl + "/getToken";
 
-      if (error) throw error;
-      if (!data) throw new Error("Product not found");
+        const description = "payment for " + data.name;
+        const amount = data.partialAmountTotal;
 
-      // Sum up stock quantities
-      const stockIn =
-        data.stock_table?.reduce((acc, cur) => acc + (cur.quantity || 0), 0) || 0;
+        // console.log("description", description);
+        const res = await axios.post(apiUrl, {
+          description,
+          amount,
+        });
 
-      // Sum up order quantities
-      const stockOut =
-        data.orders?.reduce((acc, cur) => acc + (cur.quantity || 0), 0) || 0;
+        if (res.status !== 200) {
+          throw new Error(`Payment API failed: ${res.status}`);
+        }
 
-      // Remaining stock
-      const totalStockRemaining = stockIn - stockOut;
+        console.log("res", res.data);
 
-      if (totalStockRemaining < quantity.quantity) {
-        Swal.fire("Out of Stock", "Not enough stock available!", "error");
-        throw new Error("Insufficient stock");
+        // Return token data
+        return { data: res.data };
       }
 
-      console.log("Purchase can proceed");
-      const apiUrl = paymentUrl + "/getToken";
-
-
-      const response = await getSubhistory(company.id)
-
-      const description = "payment for " + data.name;
-      const amount = response?.haveWallet ? data.partialPayment * quantity.quantity : 0;
-
-      // console.log("description", description);
+      if (error) {
+        return { data: null }
+      }
       // console.log("amount", amount);
 
       // ✅ Await axios response
-      const res = await axios.post(apiUrl, {
-        description,
-        amount,
-      });
-
-      if (res.status !== 200) {
-        throw new Error(`Payment API failed: ${res.status}`);
-      }
-
-      console.log("res", res.data);
-
-      // Return token data
-      return { data: res.data };
+      return { data: null }
 
     } catch (err) {
       console.error("Error in createTransaction:", err);
@@ -413,7 +390,7 @@ class Payment {
       }
 
       const data = await response.json();
-      
+
       return { data, error: null };
 
     } catch (err: unknown) {

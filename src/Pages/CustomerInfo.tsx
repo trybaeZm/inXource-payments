@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import { UserIcon, PhoneIcon, EnvelopeIcon, MapPinIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import PaymentService from '../api/payment';
 import type { CustomerType } from '../types/types';
+import { storeUserData } from '../services/sessions';
 
 const CustomerInfoForm = () => {
   const location = useLocation();
@@ -40,6 +41,7 @@ const CustomerInfoForm = () => {
       const res = response[0];
 
       if (res) {
+        storeUserData(res)
         // Success animation before navigation
         Swal.fire({
           icon: 'success',

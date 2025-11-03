@@ -47,13 +47,21 @@ export type selectedImagesType = {
 }
 
 export type companyProductsType = {
-    name: string
-    imageName: string
-    price: number
-    id: string
-    partialPayment: number
+    id: string;
+    name: string;
+    price: number;
+    partialPayment: number;
+    imageName: string;
+    description: string; // ✅ required field
 }
-
+export type CartItem = {
+    id: string;
+    name: string;
+    price: number;
+    partialPayment: number;
+    image: string;
+    quantity: number;
+}
 export type OrderType = {
     id: string;
     order_id: number;
@@ -117,4 +125,17 @@ export interface SubscriptionHistory {
 export type PaymentData = {
     paymentMethod: string
     amount: string
+}
+
+export interface Order {
+    id?: string;
+    order_id?: number;
+    business_id?: string;
+    customer_id?: string;
+    total_amount: number;
+    order_status?: string;
+    created_at?: string;
+    customers?: {
+        name?: string;
+    };
 }

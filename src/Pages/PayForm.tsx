@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import type { companyInfoType } from '../types/types';
 import { useSearchParams } from 'react-router-dom';
 import { checkSubBusinsess } from '../services/subscription';
+import { storeUserData } from '../services/sessions';
 
 const PhoneVerification = () => {
   const navigate = useNavigate();
@@ -96,6 +97,7 @@ const PhoneVerification = () => {
 
       if (data) {
         // Existing customer - navigate to product selection
+        storeUserData(data)
         navigate('/payment/product', { state: { data } });
       } else {
         // New customer - navigate to info collection
