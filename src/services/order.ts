@@ -21,7 +21,7 @@ export async function createOrder(newData: Partial<Order>): Promise<Order | null
             console.error("Error creating order:", error.message);
             return null;
         }
-
+        console.log("order: ", data)
         return data;
     } catch (err) {
         console.error("Unexpected error creating order:", err);
