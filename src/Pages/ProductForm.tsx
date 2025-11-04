@@ -352,13 +352,13 @@ const ProductSelectionForm = () => {
       setCompanyProducts(
         (res ?? []).map((p) => ({
           ...p,
-          description:  "", // add missing field
+          description: "", // add missing field
         }))
       );
       setFilteredProducts(
         (res ?? []).map((p) => ({
           ...p,
-          description:  "",
+          description: "",
         }))
       );
     } catch (error) {
@@ -473,10 +473,28 @@ const ProductSelectionForm = () => {
         if (response) {
           let responsefromtoken = await PaymentService.createTransaction(response.id)
 
-          if (responsefromtoken.data) {
 
-            PaymentService.redirectToPayment(responsefromtoken.data.data.paymentLink)
+          let history = await getSubhistory(company.id)
+
+          if (history?.haveWallet) {
+            if (responsefromtoken.data) {
+              PaymentService.redirectToPayment(responsefromtoken.data.data.paymentLink)
+            }
+          } else {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success!',
+              text: "transaction was a success",
+              confirmButtonColor: '#1A0670', // optional custom color
+              timer: 2000, // auto close after 2 seconds
+              timerProgressBar: true,
+            }).then(async (res) =>{
+              if(res.isConfirmed){
+                 PaymentService.redirectToPayment("/")
+              }
+            });
           }
+
         }
         console.log('Proceeding to checkout with items:', cartItems);
       }
