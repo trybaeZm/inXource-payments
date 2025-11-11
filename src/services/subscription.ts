@@ -2,7 +2,7 @@
 import { SubscriptionHistory } from "../types/types"
 import { supabase } from "./supabaseClient"
 
-export const getSubhistory = async (businessId: string): Promise<SubscriptionHistory | null> => {
+export const getSubhistory = async (businessId: string): Promise<SubscriptionHistory[] | null> => {
     try {
         const { data, error } = await supabase
             .from("businesses_owners")
@@ -16,8 +16,7 @@ export const getSubhistory = async (businessId: string): Promise<SubscriptionHis
                     .from("sunhistory")
                     .select("*")
                     .eq('userid', user_id)
-                    .eq('isactive', true)
-                    .single()
+                    .eq('paidfor', true)
 
                 if (data) {
 
@@ -40,6 +39,26 @@ export const getSubhistory = async (businessId: string): Promise<SubscriptionHis
     }
     return null
 }
+export function isStillValid(
+    creationDate: string | Date,
+    duration: number,
+    period: "days" | "year"
+): boolean {
+    const created = new Date(creationDate);
+    const now = new Date();
+
+    if (isNaN(created.getTime())) return false; // invalid date safety check
+
+    const expiry = new Date(created);
+
+    if (period === "days") {
+        expiry.setDate(expiry.getDate() + duration);
+    } else if (period === "year") {
+        expiry.setFullYear(expiry.getFullYear() + duration);
+    }
+
+    return now <= expiry;
+}
 
 export const checkSubBusinsess = async (id: string) => {
     let user_id = ""
@@ -55,14 +74,18 @@ export const checkSubBusinsess = async (id: string) => {
             try {
                 const { data, error } = await supabase
                     .from("sunhistory")
-                    .select("registeredBusinesses")
+                    .select("*, subscriptionTable(*)")
                     .eq("userid", user_id)
-                    .eq("isactive", true)
-                    .single()
+                    .eq("paidfor", true)
+                    .order("created_at", { ascending: false })
 
                 if (data) {
-                    // console.log(data)-
-                    if (data.registeredBusinesses.includes(id)) {
+                    let filteredData = data.filter((sub) => {
+                        const duration = sub.subscriptionTable?.duration_in_days || 0;
+                        return isStillValid(sub.created_at, duration, sub.subscriptionTable.period);
+                    });
+
+                    if (filteredData[0].registeredBusinesses.includes(id)) {
                         return true
                     } else {
                         return false

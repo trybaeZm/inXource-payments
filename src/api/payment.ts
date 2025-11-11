@@ -1,6 +1,6 @@
 import { supabase } from "../services/supabaseClient";
 import Swal from "sweetalert2";
-import type { CustomerType, FormData, payloadType, PaymentStatusData, ResponseFromPayApi, selectedImagesType } from "../types/types";
+import type { companyInfoType, CustomerType,  payloadType, PaymentStatusData, ResponseFromPayApi, selectedImagesType } from "../types/types";
 import axios from "axios";
 import { getSubhistory } from "../services/subscription";
 
@@ -67,7 +67,7 @@ class Payment {
     const { data, error } = await supabase
       .from("products")
       .select("id, name, price, partialPayment, imageName")
-      .eq("int_business_id", business_id);
+      .eq("business_id", business_id);
 
     if (error) {
       console.error(error);
@@ -300,11 +300,10 @@ class Payment {
     }
   }
 
-  async processPayment({ payload, selectedImages }: { payload: payloadType, selectedImages: selectedImagesType[] }) {
+  async processPayment({ payload, selectedImages, businessData }: { payload: payloadType, selectedImages: selectedImagesType[], businessData:  companyInfoType}) {
 
-    const response = await getSubhistory(company.id)
 
-    const orderResponse = await this.saveOrder({ payload, selectedImages, hasWallet: response?.haveWallet })
+    const orderResponse = await this.saveOrder({ payload, selectedImages, hasWallet: businessData.hasWallet })
 
     if (orderResponse) {
       console.log("Processing payment with payload:", payload);
@@ -313,7 +312,7 @@ class Payment {
         phoneNumber: payload?.userDetails?.phone,
         order_id: orderResponse.id
       };
-      if (response?.haveWallet) {
+      if (businessData.hasWallet) {
         try {
           const response = await fetch(`${paymentUrl}/initiatePayment`, {
             method: "POST",
@@ -347,8 +346,6 @@ class Payment {
     // 🔗 Redirects the current tab to the payment URL
     window.location.href = url;
   }
-
-
 
   // Get all images for a specific product
   getProductImages = async (

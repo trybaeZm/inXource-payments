@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import  { useState, useEffect } from 'react';
 import {
-  CheckCircleIcon,
   PhotoIcon,
   XMarkIcon,
   ShoppingCartIcon,
@@ -18,7 +17,7 @@ import {
 } from "../Components/ui/dialog"
 import PaymentService from '../api/payment';
 
-import type { companyProductsType, FormData, payloadType, selectedImagesType, userTypes, CartItem } from '../types/types';
+import type { companyProductsType, CartItem, companyInfoType } from '../types/types';
 import { getSubhistory } from '../services/subscription';
 import { makeOrderByMainUser } from '../services/order';
 import { getUserData } from '../services/sessions';
@@ -342,13 +341,13 @@ const ProductSelectionForm = () => {
   const [productDetailOpen, setProductDetailOpen] = useState(false);
 
   const companyInfoString = sessionStorage.getItem('companyInfo');
-  const company = companyInfoString ? JSON.parse(companyInfoString) : null;
+  const company : companyInfoType = companyInfoString ? JSON.parse(companyInfoString) : null;
 
   const userData = getUserData()
   // Fetch company products
   const fetchCompanyProduct = async () => {
     try {
-      const res = await PaymentService.getProductInfoByBusiness(company.business_id);
+      const res = await PaymentService.getProductInfoByBusiness(company.id);
       setCompanyProducts(
         (res ?? []).map((p) => ({
           ...p,
@@ -468,11 +467,10 @@ const ProductSelectionForm = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         // Implement checkout logic here
-        const response = await makeOrderByMainUser(cartItems, userData, company.id)
-        const history = await getSubhistory(company.id)
+        const response = await makeOrderByMainUser(cartItems, userData, company)
 
         if (response) {
-          if (history?.haveWallet) {
+          if (company.hasWallet) {
             if (response) {
               let responsefromtoken = await PaymentService.createTransaction(response.id)
               if (responsefromtoken.data) {

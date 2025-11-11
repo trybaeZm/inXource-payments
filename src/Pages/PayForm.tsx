@@ -46,6 +46,7 @@ const PhoneVerification = () => {
       setCompanyInfo(businessData.data);
 
       const checkisActiveState = await checkSubBusinsess(businessData.data.id)
+      console.log('isActiveState:', checkisActiveState)
       setIsActive(checkisActiveState)
 
     } catch (error) {

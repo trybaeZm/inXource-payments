@@ -19,7 +19,9 @@ export type userTypes = {
 
 export type companyInfoType = {
     id: string
+    name: string
     logo_url: string
+    hasWallet: boolean
     business_name: string
 }
 export type payloadType = {
