@@ -18,7 +18,6 @@ import {
 import PaymentService from '../api/payment';
 
 import type { companyProductsType, CartItem, companyInfoType } from '../types/types';
-import { getSubhistory } from '../services/subscription';
 import { makeOrderByMainUser } from '../services/order';
 import { getUserData } from '../services/sessions';
 
@@ -472,7 +471,7 @@ const ProductSelectionForm = () => {
         if (response) {
           if (company.hasWallet) {
             if (response) {
-              let responsefromtoken = await PaymentService.createTransaction(response.id)
+              const responsefromtoken = await PaymentService.createTransaction(response.id)
               if (responsefromtoken.data) {
                 PaymentService.redirectToPayment(responsefromtoken.data.data.paymentLink)
               }

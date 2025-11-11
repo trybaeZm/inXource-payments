@@ -1,4 +1,3 @@
-import { userTypes } from "../types/types"
 import { supabase } from "./supabaseClient"
 
 export const getCustomersById = async (userid: string) => {
@@ -14,9 +13,11 @@ export const getCustomersById = async (userid: string) => {
         }
 
         if (error) {
+            console.error(error)
             return false
         }
     } catch (error) {
+        console.error(error)
         return false
     }
 }

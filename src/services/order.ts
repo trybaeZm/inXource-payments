@@ -1,6 +1,5 @@
 import { CartItem, companyInfoType, Order, userTypes } from "../types/types";
 import { getCustomersById } from "./customer";
-import { getSubhistory } from "./subscription";
 import { supabase } from "./supabaseClient";
 
 export const makeOrder = async () => {
@@ -32,13 +31,12 @@ export async function createOrder(newData: Partial<Order>): Promise<Order | null
 
 
 export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, business: companyInfoType) => {
-    let userData = await getCustomersById(user.id)
-    let userID = userData.id
-    let SubscriptionHistory = await getSubhistory(business.id)
+    const userData = await getCustomersById(user.id)
+    const userID = userData.id
 
     let totalamount = 0
     let partialAmountTotal = 0
-    let products = []
+    const products = []
 
     for (let i = 0; i < Payload.length; i++) {
         products.push({ product_id: Payload[i].id, quantity: Payload[i].quantity })
@@ -49,7 +47,7 @@ export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, 
 
     console.log(totalamount, products)
 
-    let newOrder = {
+    const newOrder = {
         business_id: business.id,
         customer_id: userID,
         total_amount: totalamount,
@@ -60,7 +58,7 @@ export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, 
         partialAmountTotal: business?.hasWallet ? partialAmountTotal : 0
     }
 
-    let orderCreateResponse = await createOrder(newOrder)
+    const orderCreateResponse = await createOrder(newOrder)
 
     if (orderCreateResponse) {
         return orderCreateResponse

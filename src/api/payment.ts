@@ -2,12 +2,9 @@ import { supabase } from "../services/supabaseClient";
 import Swal from "sweetalert2";
 import type { companyInfoType, CustomerType,  payloadType, PaymentStatusData, ResponseFromPayApi, selectedImagesType } from "../types/types";
 import axios from "axios";
-import { getSubhistory } from "../services/subscription";
 
 
 
-const companyInfoString = sessionStorage.getItem('companyInfo');
-const company = companyInfoString ? JSON.parse(companyInfoString) : null;
 
 const paymentUrl = "https://paymentbackend.inxource.com/api/payment";
 // const paymentUrl = "http://localhost:8080/api/payment";

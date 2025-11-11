@@ -80,7 +80,7 @@ export const checkSubBusinsess = async (id: string) => {
                     .order("created_at", { ascending: false })
 
                 if (data) {
-                    let filteredData = data.filter((sub) => {
+                    const filteredData = data.filter((sub) => {
                         const duration = sub.subscriptionTable?.duration_in_days || 0;
                         return isStillValid(sub.created_at, duration, sub.subscriptionTable.period);
                     });
