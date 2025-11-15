@@ -1,4 +1,4 @@
-import  { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   PhotoIcon,
   XMarkIcon,
@@ -20,6 +20,7 @@ import PaymentService from '../api/payment';
 import type { companyProductsType, CartItem, companyInfoType } from '../types/types';
 import { makeOrderByMainUser } from '../services/order';
 import { getUserData } from '../services/sessions';
+import CheckoutPopup, { CheckoutData } from './payment/product/componrnts/CheckoutPopup';
 
 // Cart component
 const CartSidebar = ({
@@ -338,9 +339,10 @@ const ProductSelectionForm = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<companyProductsType | null>(null);
   const [productDetailOpen, setProductDetailOpen] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false)
 
   const companyInfoString = sessionStorage.getItem('companyInfo');
-  const company : companyInfoType = companyInfoString ? JSON.parse(companyInfoString) : null;
+  const company: companyInfoType = companyInfoString ? JSON.parse(companyInfoString) : null;
 
   const userData = getUserData()
   // Fetch company products
@@ -452,48 +454,38 @@ const ProductSelectionForm = () => {
     }
 
     setCartOpen(false);
-    // Here you would navigate to checkout or open checkout modal
-    Swal.fire({
-      title: 'Proceed to Checkout?',
-      html: `<div class="text-left">
-        <p class="mb-3">You have ${getCartItemCount()} items in your cart.</p>
-        <p class="font-semibold">Total: ZMW ${cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</p>
-      </div>`,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Checkout',
-      cancelButtonText: 'Continue Shopping'
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        // Implement checkout logic here
-        const response = await makeOrderByMainUser(cartItems, userData, company)
 
-        if (response) {
-          if (company.hasWallet) {
-            if (response) {
-              const responsefromtoken = await PaymentService.createTransaction(response.id)
-              if (responsefromtoken.data) {
-                PaymentService.redirectToPayment(responsefromtoken.data.data.paymentLink)
-              }
-            }
-          } else {
-            Swal.fire({
-              icon: 'success',
-              title: 'Success!',
-              text: "transaction was a success",
-              confirmButtonColor: '#1A0670', // optional custom color
-              timerProgressBar: true,
-            }).then(async (res) => {
-              if (res.isConfirmed) {
-                PaymentService.redirectToPayment("/")
-              }
-            });
-          }
-        }
-        console.log('Proceeding to checkout with items:', cartItems);
-      }
-    });
+    // Open the custom checkout popup instead of SweetAlert
+    setShowCheckout(true);
   };
+
+  const processCheckout = async (CheckoutData:CheckoutData) => {
+    try {
+      const response = await makeOrderByMainUser(cartItems, userData, company, CheckoutData)
+
+      if (response) {
+        if (company.hasWallet) {
+          const responsefromtoken = await PaymentService.createTransaction(response.id)
+          if (responsefromtoken.data) {
+            PaymentService.redirectToPayment(responsefromtoken.data.data.paymentLink)
+          }
+        } else {
+          // Show success message
+          Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: "Transaction completed successfully",
+            confirmButtonColor: '#1A0670',
+          }).then(() => {
+            PaymentService.redirectToPayment("/")
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Checkout error:', error)
+      throw error // Re-throw to handle in the popup
+    }
+  }
 
   // Loading state
   if (loading) {
@@ -509,6 +501,13 @@ const ProductSelectionForm = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+      <CheckoutPopup
+        isOpen={showCheckout}
+        onClose={() => setShowCheckout(false)}
+        cartItems={cartItems}
+        onCheckout={processCheckout}
+        company={company}
+      />
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

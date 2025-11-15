@@ -1,3 +1,4 @@
+import { CheckoutData } from "../Pages/payment/product/componrnts/CheckoutPopup";
 import { CartItem, companyInfoType, Order, userTypes } from "../types/types";
 import { getCustomersById } from "./customer";
 import { supabase } from "./supabaseClient";
@@ -30,7 +31,7 @@ export async function createOrder(newData: Partial<Order>): Promise<Order | null
 
 
 
-export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, business: companyInfoType) => {
+export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, business: companyInfoType, CheckoutData: CheckoutData) => {
     const userData = await getCustomersById(user.id)
     const userID = userData.id
 
@@ -51,9 +52,10 @@ export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, 
         business_id: business.id,
         customer_id: userID,
         total_amount: totalamount,
-        delivery_location: "onsight",
+        delivery_location: CheckoutData.specialInstructions,
         order_status: "pending",
-        order_payment_status: business?.hasWallet ? "pending" :"completed",
+        sammarized_notes: CheckoutData.description,
+        order_payment_status: business?.hasWallet ? "pending" : "completed",
         products: products,
         partialAmountTotal: business?.hasWallet ? partialAmountTotal : 0
     }
@@ -61,7 +63,30 @@ export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, 
     const orderCreateResponse = await createOrder(newOrder)
 
     if (orderCreateResponse) {
-        return orderCreateResponse
+        // return orderCreateResponse
+        try {
+            if (CheckoutData.image) {
+                const { data, error } = await supabase.storage
+                    .from('uploaded-files')
+                    .upload(
+                        `orders/${orderCreateResponse.id}/${CheckoutData.image.name}`,
+                        CheckoutData.image
+                    )
+
+                if (data) {
+                    console.log(data)
+                    return orderCreateResponse
+                }
+                if (error) {
+                    console.log(error)
+                }
+            } else {
+                console.log('No image to upload')
+                return orderCreateResponse
+            }
+        } catch (error) {
+            console.log(error)
+        }
     } else {
         return false
     }
