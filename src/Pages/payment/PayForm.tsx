@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PhoneIcon, ArrowRightIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
-import PaymentService from '../api/payment';
+import PaymentService from '../../api/payment';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import type { companyInfoType } from '../types/types';
+import type { companyInfoType } from '../../types/types';
 import { useSearchParams } from 'react-router-dom';
-import { checkSubBusinsess } from '../services/subscription';
-import { storeUserData } from '../services/sessions';
+import { checkSubBusinsess } from '../../services/subscription';
+import { storeUserData } from '../../services/sessions';
 
 const PhoneVerification = () => {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ const PhoneVerification = () => {
   const [loading, setLoading] = useState(false);
   const [loadingCompany, setLoadingCompany] = useState(true);
   const [searchParams] = useSearchParams();
-  const [isActive, setIsActive] = useState<boolean| undefined>(false)
+  const [isActive, setIsActive] = useState<boolean| undefined>(true)
 
   const id = searchParams.get("id");
   const companyAlias = searchParams.get("companyAlias");
@@ -45,9 +45,9 @@ const PhoneVerification = () => {
       sessionStorage.setItem('companyInfo', JSON.stringify(businessData.data));
       setCompanyInfo(businessData.data);
 
-      const checkisActiveState = await checkSubBusinsess(businessData.data.id)
-      console.log('isActiveState:', checkisActiveState)
-      setIsActive(checkisActiveState)
+      // const checkisActiveState = await checkSubBusinsess(businessData.data.id)
+      // console.log('isActiveState:', checkisActiveState)
+      // setIsActive(checkisActiveState)
 
     } catch (error) {
       console.error('Error fetching company info:', error);

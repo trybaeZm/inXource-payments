@@ -1,5 +1,6 @@
-import { CheckoutData } from "../Pages/payment/product/componrnts/CheckoutPopup";
-import { CartItem, companyInfoType, Order, userTypes } from "../types/types";
+
+import { Console } from "console";
+import { CartItem, CheckoutData, companyInfoType, Order, userTypes } from "../types/types";
 import { getCustomersById } from "./customer";
 import { supabase } from "./supabaseClient";
 
@@ -40,7 +41,7 @@ export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, 
     const products = []
 
     for (let i = 0; i < Payload.length; i++) {
-        products.push({ product_id: Payload[i].id, quantity: Payload[i].quantity })
+        products.push({ product_id: Payload[i].id, quantity: Payload[i].quantity, description: Payload[i].description, specialInstructions: Payload[i].specialInstructions })
 
         totalamount += (Payload[i].price * Payload[i].quantity)
         partialAmountTotal += (Payload[i].partialPayment * Payload[i].quantity)
@@ -65,6 +66,7 @@ export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, 
     if (orderCreateResponse) {
         // return orderCreateResponse
         try {
+            //upload image for the order
             if (CheckoutData.image) {
                 const { data, error } = await supabase.storage
                     .from('uploaded-files')
@@ -82,8 +84,28 @@ export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, 
                 }
             } else {
                 console.log('No image to upload')
-                return orderCreateResponse
             }
+            for (const product of Payload) {
+                const Image = product.images; // optional File | null
+                console.log("Uploading image:", Image);
+
+                if (Image) {
+                    const { data, error } = await supabase.storage
+                        .from('uploaded-files')
+                        .upload(
+                            `orders/${orderCreateResponse.id}/products/${Image.name}`,
+                            Image
+                        );
+
+                    if (error) {
+                        console.error("Failed to upload image:", error);
+                    } else {
+                        console.log("Image uploaded successfully:", data);
+                    }
+                }
+            }
+
+            return orderCreateResponse
         } catch (error) {
             console.log(error)
         }

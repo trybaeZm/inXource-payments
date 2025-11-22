@@ -14,13 +14,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../Components/ui/dialog"
-import PaymentService from '../api/payment';
+} from "../../../Components/ui/dialog"
+import PaymentService from '../../../api/payment';
 
-import type { companyProductsType, CartItem, companyInfoType } from '../types/types';
-import { makeOrderByMainUser } from '../services/order';
-import { getUserData } from '../services/sessions';
-import CheckoutPopup, { CheckoutData } from './payment/product/componrnts/CheckoutPopup';
+import type { companyProductsType, CartItem, companyInfoType, CheckoutData } from '../../../types/types';
+import { makeOrderByMainUser } from '../../../services/order';
+import { getUserData } from '../../../services/sessions';
+import CheckoutPopup from './componrnts/CheckoutPopup';
 
 // Cart component
 const CartSidebar = ({
@@ -81,11 +81,6 @@ const CartSidebar = ({
               <div className="space-y-3">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-700 rounded-lg">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-16 h-16 object-cover rounded-md"
-                    />
                     <div className="flex-1 min-w-0">
                       <h4 className="text-white font-medium truncate">{item.name}</h4>
                       <p className="text-blue-400 font-semibold">ZMW {item.price.toFixed(2)}</p>
@@ -410,14 +405,29 @@ const ProductSelectionForm = () => {
         return [...prev, cartItem];
       }
     });
+  };
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Added to Cart!',
-      text: `${product.name} has been added to your cart`,
-      timer: 1500,
-      showConfirmButton: false
-    });
+
+  const updateCartItemExtras = (
+    id: string,
+    extras: {
+      description?: string;
+      specialInstructions?: string;
+      imageFile?: File | null;
+    }
+  ) => {
+    setCartItems(prev =>
+      prev.map(item =>
+        item.id === id
+          ? {
+            ...item,
+            description: extras.description ?? item.description,
+            specialInstructions: extras.specialInstructions ?? item.specialInstructions,
+            images: extras.imageFile ?? item.images,
+          }
+          : item
+      )
+    );
   };
 
   const updateCartQuantity = (productId: string, quantity: number) => {
@@ -459,7 +469,7 @@ const ProductSelectionForm = () => {
     setShowCheckout(true);
   };
 
-  const processCheckout = async (CheckoutData:CheckoutData) => {
+  const processCheckout = async (CheckoutData: CheckoutData) => {
     try {
       const response = await makeOrderByMainUser(cartItems, userData, company, CheckoutData)
 
@@ -502,6 +512,7 @@ const ProductSelectionForm = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       <CheckoutPopup
+        updateCartItemExtras={updateCartItemExtras}
         isOpen={showCheckout}
         onClose={() => setShowCheckout(false)}
         cartItems={cartItems}

@@ -1,7 +1,7 @@
 import HomePage from './Pages/Homepage';
-import PayForm from './Pages/PayForm'
+import PayForm from './Pages/payment/PayForm'
 import CustomerInfoForm from './Pages/CustomerInfo';
-import ProductSelectionForm from './Pages/ProductForm';
+import ProductSelectionForm from './Pages/payment/product/ProductForm';
 import { Route, Routes } from 'react-router-dom';
 import PayStatus from './Pages/PayStatus';
 

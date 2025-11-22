@@ -3,9 +3,6 @@ import Swal from "sweetalert2";
 import type { companyInfoType, CustomerType,  payloadType, PaymentStatusData, ResponseFromPayApi, selectedImagesType } from "../types/types";
 import axios from "axios";
 
-
-
-
 const paymentUrl = "https://paymentbackend.inxource.com/api/payment";
 // const paymentUrl = "http://localhost:8080/api/payment";
 
@@ -393,9 +390,6 @@ class Payment {
       return { data: null, error: message };
     }
   }
-
-
-
 }
 
 

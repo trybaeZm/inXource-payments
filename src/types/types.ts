@@ -56,6 +56,13 @@ export type companyProductsType = {
     imageName: string;
     description: string; // ✅ required field
 }
+
+export interface CheckoutData {
+    description?: string
+    image?: File | null
+    specialInstructions?: string
+}
+
 export type CartItem = {
     id: string;
     name: string;
@@ -63,6 +70,9 @@ export type CartItem = {
     partialPayment: number;
     image: string;
     quantity: number;
+    specialInstructions?: string
+    description?: string;
+    images?: File | null
 }
 export type OrderType = {
     id: string;
