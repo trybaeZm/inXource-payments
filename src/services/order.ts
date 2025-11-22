@@ -93,7 +93,7 @@ export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, 
                     const { data, error } = await supabase.storage
                         .from('uploaded-files')
                         .upload(
-                            `orders/${orderCreateResponse.id}/products/${Image.name}`,
+                            `orders/${orderCreateResponse.id}/products/${product.id}/${Image.name}`,
                             Image
                         );
 
