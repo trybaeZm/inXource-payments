@@ -12,7 +12,7 @@ export default defineConfig({
   },
 
   preview: {
-    allowedHosts: ['payment.inxource.com'],
+    allowedHosts: ['payment.inxource.com', 'storefront-457329834011.europe-west4.run.app'],
   },
   server: {
     proxy: {
