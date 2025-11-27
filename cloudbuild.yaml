@@ -1,0 +1,25 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+  
+steps:
+  # 1. Install dependencies
+  - name: 'node:22'
+    entrypoint: 'npm'
+    args: ['install']
+
+  # 2. Build your Next.js app
+  - name: 'node:22'
+    entrypoint: 'npm'
+    args: ['run', 'build']
+
+  # 3. Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run deploy storefront \
+          --platform managed \
+          --region europe-west4 \
+          --allow-unauthenticated \
+          --source .
