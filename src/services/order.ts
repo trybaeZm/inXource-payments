@@ -113,3 +113,66 @@ export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, 
         return false
     }
 }
+
+interface OrderNotificationParams {
+    userId: string;
+    businessId: string;
+    orderId: string;
+    products: CartItem[];
+    orderedAt: string;
+}
+
+export async function createOrderNotification(params: OrderNotificationParams) {
+    const { userId, businessId, orderId, products, orderedAt } = params;
+
+    // Extract product names
+    const productNames = products.map((p) => p.name);
+
+    // Calculate total cost
+    const totalAmount = products.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+    );
+
+    const message = `A new order (#${orderId}) was placed containing: ${productNames.join(
+        ", "
+    )}. Total cost: $${totalAmount}. Date: ${new Date(
+        orderedAt
+    ).toLocaleDateString()}.`;
+
+    const { data, error } = await supabase.from("notifications").insert({
+        user_id: userId,
+        business_id: businessId,
+        title: "New Order Placed",
+        message: message,
+        notification_type: "order",
+        priority: "normal",
+        status: "unread",
+        category: "order",
+        action_url: `/orders/${orderId}`,
+        action_label: "View Order",
+        metadata: {
+            orderId,
+            totalAmount,
+            items: products.map((item) => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                partialPayment: item.partialPayment,
+                specialInstructions: item.specialInstructions,
+                description: item.description,
+            })),
+        },
+        tags: ["order", "new"],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+        console.error("Failed to create notification:", error);
+        throw error;
+    }
+
+    return data;
+}

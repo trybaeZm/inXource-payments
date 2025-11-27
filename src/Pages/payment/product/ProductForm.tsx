@@ -18,7 +18,7 @@ import {
 import PaymentService from '../../../api/payment';
 
 import type { companyProductsType, CartItem, companyInfoType, CheckoutData } from '../../../types/types';
-import { makeOrderByMainUser } from '../../../services/order';
+import { createOrderNotification, makeOrderByMainUser } from '../../../services/order';
 import { getUserData } from '../../../services/sessions';
 import CheckoutPopup from './componrnts/CheckoutPopup';
 
@@ -474,12 +474,27 @@ const ProductSelectionForm = () => {
       const response = await makeOrderByMainUser(cartItems, userData, company, CheckoutData)
 
       if (response) {
+
         if (company.hasWallet) {
           const responsefromtoken = await PaymentService.createTransaction(response.id)
           if (responsefromtoken.data) {
+            await createOrderNotification({
+              userId: userData.id,
+              businessId: company.id,
+              orderId: response.id ?? "",
+              products: cartItems,
+              orderedAt: new Date().toISOString()
+            });
             PaymentService.redirectToPayment(responsefromtoken.data.data.paymentLink)
           }
         } else {
+          await createOrderNotification({
+            userId: userData.id,
+            businessId: company.id,
+            orderId: response.id ?? "",
+            products: cartItems,
+            orderedAt: new Date().toISOString()
+          });
           // Show success message
           Swal.fire({
             icon: 'success',
