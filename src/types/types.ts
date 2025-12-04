@@ -55,6 +55,8 @@ export type companyProductsType = {
     partialPayment: number;
     imageName: string;
     description: string; // ✅ required field
+    promo?: Promotion | null; // 👈 FIX
+
 }
 
 export interface CheckoutData {
@@ -62,6 +64,16 @@ export interface CheckoutData {
     image?: File | null
     specialInstructions?: string
 }
+
+export type Promotion = {
+    id: string;
+    type: 'individual' | 'all';
+    productIds: string[];  // array of product ids
+    name: string;
+    discount: number;      // percentage e.g. 20 means 20%
+    start_date: string;     // ISO string
+    end_date: string;       // ISO string
+};
 
 export type CartItem = {
     id: string;
@@ -72,7 +84,12 @@ export type CartItem = {
     quantity: number;
     specialInstructions?: string
     description?: string;
-    images?: File | null
+    images?: File | null;
+
+    // ⭐ PROMO DATA
+    hasPromo?: boolean
+    promoPercentage?: number
+    originalPrice?: number
 }
 export type OrderType = {
     id: string;

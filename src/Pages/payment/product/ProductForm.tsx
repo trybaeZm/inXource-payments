@@ -17,10 +17,11 @@ import {
 } from "../../../Components/ui/dialog"
 import PaymentService from '../../../api/payment';
 
-import type { companyProductsType, CartItem, companyInfoType, CheckoutData } from '../../../types/types';
+import type { companyProductsType, CartItem, companyInfoType, CheckoutData, Promotion } from '../../../types/types';
 import { createOrderNotification, makeOrderByMainUser } from '../../../services/order';
 import { getUserData } from '../../../services/sessions';
 import CheckoutPopup from './componrnts/CheckoutPopup';
+import { PromotionService } from '../../../services/promotion';
 
 // Cart component
 const CartSidebar = ({
@@ -135,195 +136,9 @@ const CartSidebar = ({
   );
 };
 
-// Product Card Component
-const ProductCard = ({
-  product,
-  onAddToCart,
-  onViewDetails
-}: {
-  product: companyProductsType;
-  onAddToCart: (product: companyProductsType) => void;
-  onViewDetails: (product: companyProductsType) => void;
-}) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const getImages = async () => {
-      try {
-        const res = await PaymentService.getProductImages(product.id, product.imageName);
-        if (res && res.length > 0) {
-          setImageUrl(res);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    getImages();
-  }, [product.id, product.imageName]);
 
-  return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-      {/* Product Image */}
-      <div className="relative h-48 bg-gray-700">
-        {loading ? (
-          <div className="animate-pulse bg-gray-600 h-full w-full"></div>
-        ) : imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={product.name}
-            className="w-full h-full object-cover cursor-pointer"
-            onClick={() => onViewDetails(product)}
-          />
-        ) : (
-          <div
-            className="flex flex-col items-center justify-center h-full text-gray-400 cursor-pointer"
-            onClick={() => onViewDetails(product)}
-          >
-            <PhotoIcon className="w-12 h-12 mb-2" />
-            <span className="text-sm">No Image</span>
-          </div>
-        )}
-
-        {/* Partial Payment Badge */}
-        {product.partialPayment > 0 && (
-          <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-            Pay ZMW {product.partialPayment.toFixed(2)} now
-          </div>
-        )}
-      </div>
-
-      {/* Product Info */}
-      <div className="p-4">
-        <h3
-          className="text-white font-semibold mb-2 cursor-pointer hover:text-blue-400 transition-colors line-clamp-2"
-          onClick={() => onViewDetails(product)}
-        >
-          {product.name}
-        </h3>
-
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-2xl font-bold text-white">
-            ZMW {product.price.toFixed(2)}
-          </span>
-        </div>
-
-        <button
-          onClick={() => onAddToCart(product)}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
-        >
-          <PlusIcon className="w-4 h-4" />
-          Add to Cart
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Product Detail Modal
-const ProductDetailModal = ({
-  product,
-  isOpen,
-  onClose,
-  onAddToCart
-}: {
-  product: companyProductsType | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onAddToCart: (product: companyProductsType) => void;
-}) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (product && isOpen) {
-      const getImages = async () => {
-        try {
-          const res = await PaymentService.getProductImages(product.id, product.imageName);
-          if (res && res.length > 0) {
-            setImageUrl(res);
-          }
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      getImages();
-    }
-  }, [product, isOpen]);
-
-  if (!product) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(isOpen: boolean) => !isOpen && onClose()}>
-      <DialogContent className="max-w-4xl bg-gray-800 border-gray-700">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-white">
-            {product.name}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          {/* Product Image */}
-          <div className="bg-gray-700 rounded-lg overflow-hidden">
-            {loading ? (
-              <div className="animate-pulse bg-gray-600 h-80 w-full"></div>
-            ) : imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={product.name}
-                className="w-full h-80 object-cover"
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-80 text-gray-400">
-                <PhotoIcon className="w-16 h-16 mb-4" />
-                <span>No Image Available</span>
-              </div>
-            )}
-          </div>
-
-          {/* Product Details */}
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">Price</h3>
-              <p className="text-3xl font-bold text-blue-400">
-                ZMW {product.price.toFixed(2)}
-              </p>
-              {product.partialPayment > 0 && (
-                <p className="text-green-400 mt-1">
-                  Initial payment: ZMW {product.partialPayment.toFixed(2)}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
-              <p className="text-gray-300">
-                {product.description || 'No description available.'}
-              </p>
-            </div>
-
-            <button
-              onClick={() => {
-                onAddToCart(product);
-                onClose();
-              }}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center gap-2"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Add to Cart
-            </button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 const ProductSelectionForm = () => {
   const [companyProducts, setCompanyProducts] = useState<companyProductsType[]>([]);
@@ -335,6 +150,7 @@ const ProductSelectionForm = () => {
   const [selectedProduct, setSelectedProduct] = useState<companyProductsType | null>(null);
   const [productDetailOpen, setProductDetailOpen] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false)
+  const promoService = new PromotionService()
 
   const companyInfoString = sessionStorage.getItem('companyInfo');
   const company: companyInfoType = companyInfoString ? JSON.parse(companyInfoString) : null;
@@ -380,10 +196,41 @@ const ProductSelectionForm = () => {
       );
       setFilteredProducts(filtered);
     }
-  }, [searchTerm, companyProducts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Cart functionality
+
+  async function applyPromotion(product: companyProductsType) {
+    const promo = await promoService.getActivePromotionForProduct(product.id);
+
+    if (!promo) {
+      return {
+        hasPromo: false,
+        finalPrice: product.price,
+        percentage: 0,
+        originalPrice: product.price,
+      };
+    }
+
+    const percentage = promo.discount;
+    const discount = (product.price * percentage) / 100;
+    const finalPrice = product.price - discount;
+
+    return {
+      hasPromo: true,
+      finalPrice,
+      percentage,
+      originalPrice: product.price,
+    };
+  }
+
+
+
   const addToCart = (product: companyProductsType) => {
+    const finalPrice = product.promo
+      ? product.price * (1 - product.promo.discount / 100)
+      : product.price;
+
     setCartItems(prev => {
       const existingItem = prev.find(item => item.id === product.id);
 
@@ -393,20 +240,21 @@ const ProductSelectionForm = () => {
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
-      } else {
-        const cartItem: CartItem = {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          partialPayment: product.partialPayment,
-          image: '', // We'll handle images separately
-          quantity: 1
-        };
-        return [...prev, cartItem];
       }
+
+      const cartItem: CartItem = {
+        id: product.id,
+        name: product.name,
+        price: finalPrice,            // 👈 USE DISCOUNTED PRICE
+        partialPayment: product.partialPayment,
+        image: '',
+        quantity: 1,
+        description: product.description,
+      };
+
+      return [...prev, cartItem];
     });
   };
-
 
   const updateCartItemExtras = (
     id: string,
@@ -511,6 +359,273 @@ const ProductSelectionForm = () => {
       throw error // Re-throw to handle in the popup
     }
   }
+
+  // Product Card Component
+  const ProductCard = ({
+    product,
+    onAddToCart,
+    onViewDetails
+  }: {
+    product: companyProductsType;
+    onAddToCart: (product: companyProductsType) => void;
+    onViewDetails: (product: companyProductsType) => void;
+  }) => {
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [promo, setPromo] = useState<Promotion | null>(null);
+
+    useEffect(() => {
+      const loadPromo = async () => {
+        const p = await promoService.getActivePromotionForProduct(product.id);
+        if (p) {
+          setPromo(p);
+        }
+      };
+
+      const getImages = async () => {
+        try {
+          const res = await PaymentService.getProductImages(product.id, product.imageName);
+          if (res && res.length > 0) {
+            setImageUrl(res);
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      getImages();
+      loadPromo();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return (
+      <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+        {/* Product Image */}
+        <div className="relative h-48 bg-gray-700">
+          {loading ? (
+            <div className="animate-pulse bg-gray-600 h-full w-full"></div>
+          ) : imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={product.name}
+              className="w-full h-full object-cover cursor-pointer"
+              onClick={() => onViewDetails({
+              ...product,
+              promo
+            })}
+            />
+          ) : (
+            <div
+              className="flex flex-col items-center justify-center h-full text-gray-400 cursor-pointer"
+              onClick={() => onViewDetails(product)}
+            >
+              <PhotoIcon className="w-12 h-12 mb-2" />
+              <span className="text-sm">No Image</span>
+            </div>
+          )}
+
+          {/* Partial Payment Badge */}
+          {product.partialPayment > 0 && (
+            <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+              Pay ZMW {product.partialPayment.toFixed(2)} now
+            </div>
+          )}.
+
+          {promo && (
+            <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+              {promo.discount}% OFF
+            </div>
+          )}
+        </div>
+
+        {/* Product Info */}
+        <div className="p-4">
+          <h3
+            className="text-white font-semibold mb-2 cursor-pointer hover:text-blue-400 transition-colors line-clamp-2"
+            onClick={() => onViewDetails(product)}
+          >
+            {product.name}
+          </h3>
+
+          <div className="flex items-center justify-between mb-3">
+            {promo ? (
+              <div>
+                <span className="text-sm text-gray-400 line-through mr-2">
+                  ZMW {product.price.toFixed(2)}
+                </span>
+
+                <span className="text-2xl font-bold text-green-400">
+                  ZMW {(product.price * (1 - promo.discount / 100)).toFixed(2)}
+                </span>
+              </div>
+            ) : (
+              <span className="text-2xl font-bold text-white">
+                ZMW {product.price.toFixed(2)}
+              </span>
+            )}
+          </div>
+
+          <button
+            onClick={() => onAddToCart({
+              ...product,
+              promo
+            })}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+          >
+            <PlusIcon className="w-4 h-4" />
+            Add to Cart
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+
+
+  // Product Detail Modal
+  const ProductDetailModal = ({
+    product,
+    isOpen,
+    onClose,
+    onAddToCart
+  }: {
+    product: companyProductsType | null;
+    isOpen: boolean;
+    onClose: () => void;
+    onAddToCart: (product: companyProductsType) => void;
+  }) => {
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    if (!product) return null;
+
+    const promo = product.promo;
+    const discountedPrice = promo
+      ? product.price * (1 - promo.discount / 100)
+      : product.price;
+
+    useEffect(() => {
+      if (product && isOpen) {
+        const getImages = async () => {
+          try {
+            const res = await PaymentService.getProductImages(
+              product.id,
+              product.imageName
+            );
+            if (res && res.length > 0) {
+              setImageUrl(res);
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        getImages();
+      }
+    }, []);
+
+    return (
+      <Dialog open={isOpen} onOpenChange={(isOpen: boolean) => !isOpen && onClose()}>
+        <DialogContent className="max-w-4xl bg-gray-800 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-white">
+              {product.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+
+            {/* Product Image */}
+            <div className="relative bg-gray-700 rounded-lg overflow-hidden">
+              {/* PROMO BADGE */}
+              {promo && (
+                <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                  {promo.discount}% OFF
+                </div>
+              )}
+
+              {loading ? (
+                <div className="animate-pulse bg-gray-600 h-80 w-full"></div>
+              ) : imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={product.name}
+                  className="w-full h-80 object-cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-80 text-gray-400">
+                  <PhotoIcon className="w-16 h-16 mb-4" />
+                  <span>No Image Available</span>
+                </div>
+              )}
+            </div>
+
+            {/* Product Details */}
+            <div className="space-y-4">
+
+              {/* PRICE AREA */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Price</h3>
+
+                {promo ? (
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-400 line-through text-lg">
+                      ZMW {product.price.toFixed(2)}
+                    </span>
+                    <span className="text-3xl font-bold text-yellow-400">
+                      ZMW {discountedPrice.toFixed(2)}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold text-blue-400">
+                    ZMW {product.price.toFixed(2)}
+                  </p>
+                )}
+
+                {/* Partial Payment */}
+                {product.partialPayment > 0 && (
+                  <p className="text-green-400 mt-1">
+                    Initial payment: ZMW {product.partialPayment.toFixed(2)}
+                  </p>
+                )}
+
+                {/* Promo Description */}
+                {promo && (
+                  <p className="text-sm text-red-400">
+                    Promo ends: {new Date(promo.end_date).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+
+              {/* DESCRIPTION */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
+                <p className="text-gray-300">
+                  {product.description || 'No description available.'}
+                </p>
+              </div>
+
+              {/* ADD TO CART */}
+              <button
+                onClick={() => {
+                  onAddToCart({ ...product, promo });
+                  onClose();
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center gap-2"
+              >
+                <PlusIcon className="w-5 h-5" />
+                Add to Cart
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   // Loading state
   if (loading) {
