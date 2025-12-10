@@ -2,11 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PhoneIcon, ArrowRightIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
 import PaymentService from '../../api/payment';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import type { companyInfoType } from '../../types/types';
 import { useSearchParams } from 'react-router-dom';
-import { checkSubBusinsess } from '../../services/subscription';
 import { storeUserData } from '../../services/sessions';
 
 const PhoneVerification = () => {
@@ -15,16 +14,14 @@ const PhoneVerification = () => {
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingCompany, setLoadingCompany] = useState(true);
-  const [searchParams] = useSearchParams();
-  const [isActive, setIsActive] = useState<boolean| undefined>(true)
-
-  const id = searchParams.get("id");
-  const companyAlias = searchParams.get("companyAlias");
+  const [isActive] = useState<boolean | undefined>(true)
+  const { alias } = useParams();
 
   const fetchCompanyInfo = useCallback(async () => {
     setLoadingCompany(true);
+    console.log(alias)
     try {
-      if (!id) {
+      if (!alias) {
         throw new Error('Invalid decrypted token data');
       }
 
@@ -34,7 +31,7 @@ const PhoneVerification = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ business_id: id }),
+        body: JSON.stringify({ business_alias: alias }),
       });
 
       if (!companyResponse.ok) {
@@ -45,21 +42,17 @@ const PhoneVerification = () => {
       sessionStorage.setItem('companyInfo', JSON.stringify(businessData.data));
       setCompanyInfo(businessData.data);
 
-      // const checkisActiveState = await checkSubBusinsess(businessData.data.id)
-      // console.log('isActiveState:', checkisActiveState)
-      // setIsActive(checkisActiveState)
-
     } catch (error) {
       console.error('Error fetching company info:', error);
       Swal.fire('Error', 'Unable to load company information. Please try again.', 'error');
     } finally {
       setLoadingCompany(false);
     }
-  }, [id]);
+  }, [alias]);
 
   useEffect(() => {
-    if (companyAlias) fetchCompanyInfo();
-  }, [companyAlias, fetchCompanyInfo]);
+    if (alias) fetchCompanyInfo();
+  }, [alias, fetchCompanyInfo]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -99,10 +92,10 @@ const PhoneVerification = () => {
       if (data) {
         // Existing customer - navigate to product selection
         storeUserData(data)
-        navigate('/payment/product', { state: { data } });
+        navigate(`/${alias}/product`, { state: { data } });
       } else {
         // New customer - navigate to info collection
-        navigate('/payment/info', {
+        navigate(`/${alias}/info`, {
           state: {
             phone: phone,
             business_id: companyInfo.id
@@ -185,93 +178,93 @@ const PhoneVerification = () => {
           <>
             {isActive ?
               (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-md"
-              >
-                {/* Header with company info */}
-                <div className="bg-gray-600 p-6 text-center">
-                  <motion.div variants={itemVariants} className="flex flex-col items-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-white/30 bg-gray-700 backdrop-blur-sm flex items-center justify-center mb-4">
-                      <img
-                        src={companyInfo.logo_url || 'https://imageplaceholder.net/600x400/eeeeee/131313?text=Your+logo'}
-                        alt="Business Logo"
-                        className="w-20 h-20 rounded-full object-cover"
-                      />
-                    </div>
-                    <h1 className="text-2xl font-bold text-white">{companyInfo.business_name}</h1>
-                    <p className="text-blue-100 mt-2">Welcome to our payment portal</p>
-                  </motion.div>
-                </div>
-
-                {/* Form section */}
-                <div className="p-6">
-                  <motion.h2 variants={itemVariants} className="text-xl font-semibold text-gray-800 mb-2 text-center">
-                    Enter Your Phone Number
-                  </motion.h2>
-
-                  <motion.p variants={itemVariants} className="text-gray-600 text-center mb-6">
-                    We'll check if you've shopped with us before
-                  </motion.p>
-
-                  <form onSubmit={handleSubmit}>
-                    <motion.div variants={itemVariants} className="mb-6">
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <PhoneIcon className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          type="tel"
-                          id="phone"
-                          name="phone"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder="07XXXXXXXX or 09XXXXXXXX"
-                          required
-                          className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                <motion.div
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-md"
+                >
+                  {/* Header with company info */}
+                  <div className="bg-gray-600 p-6 text-center">
+                    <motion.div variants={itemVariants} className="flex flex-col items-center">
+                      <div className="w-24 h-24 rounded-full border-4 border-white/30 bg-gray-700 backdrop-blur-sm flex items-center justify-center mb-4">
+                        <img
+                          src={companyInfo.logo_url || 'https://imageplaceholder.net/600x400/eeeeee/131313?text=Your+logo'}
+                          alt="Business Logo"
+                          className="w-20 h-20 rounded-full object-cover"
                         />
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Must start with 07 or 09 and be 10 digits long
+                      <h1 className="text-2xl font-bold text-white">{companyInfo.business_name}</h1>
+                      <p className="text-blue-100 mt-2">Welcome to our payment portal</p>
+                    </motion.div>
+                  </div>
+
+                  {/* Form section */}
+                  <div className="p-6">
+                    <motion.h2 variants={itemVariants} className="text-xl font-semibold text-gray-800 mb-2 text-center">
+                      Enter Your Phone Number
+                    </motion.h2>
+
+                    <motion.p variants={itemVariants} className="text-gray-600 text-center mb-6">
+                      We'll check if you've shopped with us before
+                    </motion.p>
+
+                    <form onSubmit={handleSubmit}>
+                      <motion.div variants={itemVariants} className="mb-6">
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                          Phone Number
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <PhoneIcon className="h-5 w-5 text-gray-400" />
+                          </div>
+                          <input
+                            type="tel"
+                            id="phone"
+                            name="phone"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="07XXXXXXXX or 09XXXXXXXX"
+                            required
+                            className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Must start with 07 or 09 and be 10 digits long
+                        </p>
+                      </motion.div>
+
+                      <motion.div variants={itemVariants}>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className={`w-full py-3.5 rounded-lg font-semibold text-white transition-all flex items-center justify-center ${loading
+                            ? 'bg-blue-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-lg'
+                            }`}
+                        >
+                          {loading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                              Checking...
+                            </>
+                          ) : (
+                            <>
+                              Continue
+                              <ArrowRightIcon className="ml-2 h-5 w-5" />
+                            </>
+                          )}
+                        </button>
+                      </motion.div>
+                    </form>
+
+                    <motion.div variants={itemVariants} className="mt-6 p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-700 text-center">
+                        <strong>Why we ask for your phone number:</strong> We use it to find your existing account or create a new one for a faster checkout experience.
                       </p>
                     </motion.div>
-
-                    <motion.div variants={itemVariants}>
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className={`w-full py-3.5 rounded-lg font-semibold text-white transition-all flex items-center justify-center ${loading
-                          ? 'bg-blue-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-lg'
-                          }`}
-                      >
-                        {loading ? (
-                          <>
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                            Checking...
-                          </>
-                        ) : (
-                          <>
-                            Continue
-                            <ArrowRightIcon className="ml-2 h-5 w-5" />
-                          </>
-                        )}
-                      </button>
-                    </motion.div>
-                  </form>
-
-                  <motion.div variants={itemVariants} className="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-700 text-center">
-                      <strong>Why we ask for your phone number:</strong> We use it to find your existing account or create a new one for a faster checkout experience.
-                    </p>
-                  </motion.div>
-                </div>
-              </motion.div>)
+                  </div>
+                </motion.div>)
               : (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}

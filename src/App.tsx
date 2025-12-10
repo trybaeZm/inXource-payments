@@ -7,13 +7,17 @@ import PayStatus from './Pages/PayStatus';
 
 function App() {
   return (
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/payment" element={<PayForm />} />
-        <Route path="/payment/info" element={<CustomerInfoForm />} />
-        <Route path="/payment/product" element={<ProductSelectionForm />} />
-        <Route path="/payment/status/:id" element={<PayStatus />} />
-      </Routes>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+
+      {/* Alias wrapper */}
+      <Route path="/:alias">
+        <Route index element={<PayForm />} />
+        <Route path="info" element={<CustomerInfoForm />} />
+        <Route path="product" element={<ProductSelectionForm />} />
+        <Route path="status/:id" element={<PayStatus />} />
+      </Route>
+    </Routes>
   );
 }
 

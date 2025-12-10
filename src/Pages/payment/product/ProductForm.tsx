@@ -22,6 +22,7 @@ import { createOrderNotification, makeOrderByMainUser } from '../../../services/
 import { getUserData } from '../../../services/sessions';
 import CheckoutPopup from './componrnts/CheckoutPopup';
 import { PromotionService } from '../../../services/promotion';
+import { useParams } from 'react-router-dom';
 
 // Cart component
 const CartSidebar = ({
@@ -151,6 +152,7 @@ const ProductSelectionForm = () => {
   const [productDetailOpen, setProductDetailOpen] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false)
   const promoService = new PromotionService()
+  const { alias } = useParams()
 
   const companyInfoString = sessionStorage.getItem('companyInfo');
   const company: companyInfoType = companyInfoString ? JSON.parse(companyInfoString) : null;
@@ -412,9 +414,9 @@ const ProductSelectionForm = () => {
               alt={product.name}
               className="w-full h-full object-cover cursor-pointer"
               onClick={() => onViewDetails({
-              ...product,
-              promo
-            })}
+                ...product,
+                promo
+              })}
             />
           ) : (
             <div

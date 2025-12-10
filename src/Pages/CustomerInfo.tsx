@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent } from 'react';
 import { motion } from 'framer-motion';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { UserIcon, PhoneIcon, EnvelopeIcon, MapPinIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import PaymentService from '../api/payment';
@@ -21,6 +21,7 @@ const CustomerInfoForm = () => {
     name: '',
     email: ''
   });
+  const { alias } = useParams();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -30,7 +31,7 @@ const CustomerInfoForm = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    
+
     const customerData: CustomerType = {
       ...formData,
       name: `${formData.firstName} ${formData.lastName}`
@@ -50,7 +51,7 @@ const CustomerInfoForm = () => {
           timer: 1500,
           showConfirmButton: false
         }).then(() => {
-          navigate('/payment/product', { state: { data: res } });
+          navigate(`/${alias}/product`, { state: { data: res } });
         });
       }
     } catch (error: unknown) {
@@ -85,7 +86,7 @@ const CustomerInfoForm = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 py-8 px-4 flex flex-col items-center">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -243,11 +244,10 @@ const CustomerInfoForm = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3.5 rounded-lg font-semibold text-white transition-all flex items-center justify-center ${
-                loading
+              className={`w-full py-3.5 rounded-lg font-semibold text-white transition-all flex items-center justify-center ${loading
                   ? 'bg-blue-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-lg'
-              }`}
+                }`}
             >
               {loading ? (
                 <>
@@ -265,7 +265,7 @@ const CustomerInfoForm = () => {
         </form>
       </motion.div>
 
-      <motion.p 
+      <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
