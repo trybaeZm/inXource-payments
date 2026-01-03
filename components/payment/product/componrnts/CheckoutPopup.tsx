@@ -1,4 +1,3 @@
-'use client'
 import { useState, useRef } from 'react'
 import {
     Dialog,
@@ -17,7 +16,7 @@ import {
     Loader2,
     ShoppingCart
 } from 'lucide-react'
-import { CartItem, CheckoutData } from '../../../../types/types'
+import { CartItem, CheckoutData } from '@/types/types'
 
 interface extraitemstype {
     description: string;
@@ -385,7 +384,7 @@ const CheckoutPopup = ({ isOpen, onClose, cartItems, onCheckout, company, update
     }
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open:any) => !open && resetForm()}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && resetForm()}>
             {
                 isOpen ?
                     <div className="backdrop-blur-xl fixed  top-0 left-0 right-0 bottom-0 bg-[#00000050] justify-center items-center flex flex-col p-0 z-[9999] ">

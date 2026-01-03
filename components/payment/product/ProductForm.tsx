@@ -151,15 +151,8 @@ const ProductSelectionForm = () => {
   const [productDetailOpen, setProductDetailOpen] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false)
   const promoService = new PromotionService()
-  const [companyInfoString, setCompanyInfo] = useState<any>(null);
 
-   useEffect(() => {
-    const stored = sessionStorage.getItem('companyInfo');
-    if (stored) {
-      setCompanyInfo(JSON.parse(stored));
-    }
-  }, []);
-  
+  const companyInfoString = sessionStorage.getItem('companyInfo');
   const company: companyInfoType = companyInfoString ? JSON.parse(companyInfoString) : null;
 
   const userData = getUserData()
@@ -174,7 +167,7 @@ const ProductSelectionForm = () => {
         }))
       );
       setFilteredProducts(
-        (res ?? []).map((p:any) => ({
+        (res ?? []).map((p: any) => ({
           ...p,
           description: "",
         }))

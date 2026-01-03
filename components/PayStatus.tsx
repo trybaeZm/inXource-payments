@@ -11,8 +11,6 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 // UI states
 type UIStatus = "loading" | "success" | "failed" | "pending";
 
-
-
 const PayStatus: React.FC = () => {
   const [status, setStatus] = useState<UIStatus>("loading");
   const [paymentDetails, setPaymentDetails] = useState<StatusPayload | null | undefined>(null);
@@ -26,6 +24,7 @@ const PayStatus: React.FC = () => {
 
   const invoiceId = searchParams.get("bb_invoice_id");
   const token = searchParams.get("token");
+  const apistatus = searchParams.get("status");
 
 
 
@@ -42,9 +41,9 @@ const PayStatus: React.FC = () => {
 
       const statusCode = data.data?.paymentStatus?.responsecode;
 
-      console.log("Payment status code:", statusCode);
+      console.log("Payment status code:", apistatus);
 
-      if (statusCode === 101) {
+      if (apistatus == 'PENDING') {
         setStatus("pending");
         if (retries.current < maxRetries) {
           retries.current++;
@@ -53,18 +52,16 @@ const PayStatus: React.FC = () => {
           setStatus("failed");
           setErrorMessage("Payment verification timed out. Please contact support.");
         }
-      } else if (statusCode === 100) {
+      } else if (apistatus == 'COMPLETE') {
         PaymentService.updateSaveStatus(invoiceId)
           .then((res) => {
-            if (res) {
-              setStatus("success");
-              setTimeout(() => router.push("/"), 5000);
-            }
+            setStatus("success");
+            setTimeout(() => router.push("/"), 5000);
           }).catch((err) => {
             console.error("Error updating save status:", err);
             setStatus("failed");
             setErrorMessage("Failed to update order status. Please contact support.");
-          });
+          }); 
       } else {
         setStatus("failed");
         setErrorMessage(data.data?.paymentStatus?.responsemessage || "Payment failed");

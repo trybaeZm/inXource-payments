@@ -1,12 +1,12 @@
 import CustomerInfoForm from "@/components/CustomerInfo"
 import { Suspense } from "react"
 
-const Page = () => {
+ const Page = ()=> {
     return (
         <>
-            <Suspense fallback={<>Loading...</>}>
-                <CustomerInfoForm />
-            </Suspense>
+        <Suspense>
+            <CustomerInfoForm/>
+        </Suspense>
         </>
     )
 }

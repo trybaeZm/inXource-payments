@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import type { companyInfoType } from '../../types/types';
 import { storeUserData } from '../../services/sessions';
 import { useParams, useRouter } from 'next/navigation';
+import { CompanyService } from '@/services/company';
 
 const PhoneVerification = () => {
   const router = useRouter();
@@ -19,30 +20,26 @@ const PhoneVerification = () => {
   const [loadingCompany, setLoadingCompany] = useState(true);
   const [isActive] = useState<boolean | undefined>(true)
 
+  const companyService = new CompanyService()
+
   const fetchCompanyInfo = useCallback(async () => {
     setLoadingCompany(true);
-    console.log(alias)
     try {
       if (!alias) {
         throw new Error('Invalid decrypted token data');
       }
 
-      // Second request: fetch company data
-      const companyResponse = await fetch('https://dashboard.inxource.com/api/fetchCompany', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ business_alias: alias }),
-      });
 
-      if (!companyResponse.ok) {
-        throw new Error(`Failed to fetch company data. Status: ${companyResponse.status}`);
+      const decodedStoreName = decodeURIComponent(alias);
+      // Second request: fetch company data
+      const companyResponse = await companyService.getBusinessDetails(decodedStoreName)
+
+      if (!companyResponse) {
+        throw new Error(`Failed to fetch company data. `);
       }
 
-      const businessData = await companyResponse.json();
-      sessionStorage.setItem('companyInfo', JSON.stringify(businessData.data));
-      setCompanyInfo(businessData.data);
+      sessionStorage.setItem('companyInfo', JSON.stringify(companyResponse));
+      setCompanyInfo(companyResponse);
 
     } catch (error) {
       console.error('Error fetching company info:', error);
