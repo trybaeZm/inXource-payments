@@ -1,8 +1,0 @@
-node_modules
-old_app
-dist
-node_modules
-.git
-.vscode
-*.log
-dist
