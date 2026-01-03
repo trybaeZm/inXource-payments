@@ -1,3 +1,4 @@
+'use client'
 import { useState, useEffect } from 'react';
 import {
   PhotoIcon,
@@ -20,7 +21,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/Components/ui/dialog';
+} from '@/components/ui/dialog';
 
 // Cart component
 const CartSidebar = ({
@@ -150,8 +151,15 @@ const ProductSelectionForm = () => {
   const [productDetailOpen, setProductDetailOpen] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false)
   const promoService = new PromotionService()
+  const [companyInfoString, setCompanyInfo] = useState<any>(null);
 
-  const companyInfoString = sessionStorage.getItem('companyInfo');
+   useEffect(() => {
+    const stored = sessionStorage.getItem('companyInfo');
+    if (stored) {
+      setCompanyInfo(JSON.parse(stored));
+    }
+  }, []);
+  
   const company: companyInfoType = companyInfoString ? JSON.parse(companyInfoString) : null;
 
   const userData = getUserData()

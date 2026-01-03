@@ -1,9 +1,12 @@
 import CustomerInfoForm from "@/components/CustomerInfo"
+import { Suspense } from "react"
 
- const Page = ()=> {
+const Page = () => {
     return (
         <>
-            <CustomerInfoForm/>
+            <Suspense fallback={<>Loading...</>}>
+                <CustomerInfoForm />
+            </Suspense>
         </>
     )
 }

@@ -1,9 +1,12 @@
 import ProductSelectionForm from "@/components/payment/product/ProductForm"
+import { Suspense } from "react"
 
- const Page = ()=> {
+const Page = () => {
     return (
         <>
-            <ProductSelectionForm/>
+            <Suspense fallback={<>Loading...</>}>
+                <ProductSelectionForm />
+            </Suspense>
         </>
     )
 }

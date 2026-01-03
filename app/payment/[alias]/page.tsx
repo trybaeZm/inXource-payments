@@ -1,9 +1,12 @@
 import PhoneVerification from "@/components/payment/PayForm"
+import { Suspense } from "react"
 
- const Page = ()=> {
+const Page = () => {
     return (
         <>
-            <PhoneVerification/>
+            <Suspense fallback={<>Loading...</>}>
+                <PhoneVerification />
+            </Suspense>
         </>
     )
 }

@@ -1,10 +1,11 @@
+'use client'
 import { useState, useRef } from 'react'
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle
-} from "../../../../Components/ui/dialog"
+} from "@/components/ui/dialog"
 import {
     CreditCard,
     Image as ImageIcon,
@@ -384,7 +385,7 @@ const CheckoutPopup = ({ isOpen, onClose, cartItems, onCheckout, company, update
     }
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && resetForm()}>
+        <Dialog open={isOpen} onOpenChange={(open:any) => !open && resetForm()}>
             {
                 isOpen ?
                     <div className="backdrop-blur-xl fixed  top-0 left-0 right-0 bottom-0 bg-[#00000050] justify-center items-center flex flex-col p-0 z-[9999] ">

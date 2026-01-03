@@ -1,9 +1,12 @@
 import PayStatus from "@/components/PayStatus"
+import { Suspense } from "react"
 
- const Page = ()=> {
+const Page = () => {
     return (
         <>
-            <PayStatus/>
+            <Suspense fallback={<>Loading...</>}>
+                <PayStatus />
+            </Suspense>
         </>
     )
 }

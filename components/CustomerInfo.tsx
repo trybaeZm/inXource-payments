@@ -1,3 +1,4 @@
+'use client'
 import { useState, type ChangeEvent } from 'react';
 import { motion } from 'framer-motion';
 import Swal from 'sweetalert2';
