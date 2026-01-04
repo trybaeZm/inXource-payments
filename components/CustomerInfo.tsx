@@ -11,9 +11,6 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 const CustomerInfoForm = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-
-
-
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -48,13 +45,14 @@ const CustomerInfoForm = () => {
 
       if (res) {
         storeUserData(res)
-        // Success animation before navigation
         Swal.fire({
           icon: 'success',
           title: 'Profile Created!',
           text: 'Taking you to product selection...',
           timer: 1500,
-          showConfirmButton: false
+          showConfirmButton: false,
+          background: '#1f2937',
+          color: '#f3f4f6'
         }).then(() => {
           router.push(
             `/${alias}/product?data=${encodeURIComponent(JSON.stringify(res))}`
@@ -63,7 +61,14 @@ const CustomerInfoForm = () => {
       }
     } catch (error: unknown) {
       const errorMessage = (error instanceof Error) ? error.message : 'An unexpected error occurred';
-      Swal.fire('Error', errorMessage, 'error');
+      Swal.fire({
+        title: 'Error',
+        text: errorMessage,
+        icon: 'error',
+        background: '#1f2937',
+        color: '#f3f4f6',
+        confirmButtonColor: '#3b82f6'
+      });
     } finally {
       setLoading(false);
     }
@@ -92,21 +97,21 @@ const CustomerInfoForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 py-8 px-4 flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4 flex flex-col items-center">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="text-center mb-8 max-w-2xl"
       >
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-700 rounded-full mb-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-700 to-purple-700 rounded-full mb-4 shadow-lg">
           <UserIcon className="w-8 h-8 text-white" />
         </div>
         <h1 className="text-3xl font-bold text-white mb-3">Welcome!</h1>
-        <p className="text-blue-100 text-lg">
+        <p className="text-gray-300 text-lg">
           Since it's your first time, we just need a few quick details to get to know you better.
         </p>
-        <p className="text-blue-200 mt-2">
+        <p className="text-gray-400 mt-2">
           Don't worry—this is a one-time request, and we won't ask again.
         </p>
       </motion.div>
@@ -115,24 +120,24 @@ const CustomerInfoForm = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden"
+        className="w-full max-w-md bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-gray-700"
       >
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white text-center">
+        <div className="bg-gradient-to-r from-blue-700 to-purple-700 p-4 text-white text-center">
           <h2 className="text-xl font-semibold">Customer Information</h2>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="firstName">
+              <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="firstName">
                 First Name *
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <UserIcon className="h-5 w-5 text-gray-400" />
+                  <UserIcon className="h-5 w-5 text-gray-500" />
                 </div>
                 <input
-                  className="pl-10 w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  className="pl-10 w-full p-3 rounded-lg border border-gray-600 bg-gray-900 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition placeholder-gray-500"
                   type="text"
                   id="firstName"
                   name="firstName"
@@ -145,11 +150,11 @@ const CustomerInfoForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="lastName">
+              <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="lastName">
                 Last Name *
               </label>
               <input
-                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                className="w-full p-3 rounded-lg border border-gray-600 bg-gray-900 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition placeholder-gray-500"
                 type="text"
                 id="lastName"
                 name="lastName"
@@ -162,15 +167,15 @@ const CustomerInfoForm = () => {
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">
+            <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="email">
               Email Address *
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <EnvelopeIcon className="h-5 w-5 text-gray-400" />
+                <EnvelopeIcon className="h-5 w-5 text-gray-500" />
               </div>
               <input
-                className="pl-10 w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                className="pl-10 w-full p-3 rounded-lg border border-gray-600 bg-gray-900 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition placeholder-gray-500"
                 type="email"
                 id="email"
                 name="email"
@@ -183,15 +188,15 @@ const CustomerInfoForm = () => {
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="phone">
+            <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="phone">
               Phone Number
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <PhoneIcon className="h-5 w-5 text-gray-400" />
+                <PhoneIcon className="h-5 w-5 text-gray-500" />
               </div>
               <input
-                className="pl-10 w-full p-3 rounded-lg border border-gray-300 bg-gray-100"
+                className="pl-10 w-full p-3 rounded-lg border border-gray-600 bg-gray-800 text-gray-400 cursor-not-allowed"
                 type="text"
                 id="phone"
                 name="phone"
@@ -204,43 +209,43 @@ const CustomerInfoForm = () => {
 
           <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="gender">
+              <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="gender">
                 Gender *
               </label>
               <select
-                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                className="w-full p-3 rounded-lg border border-gray-600 bg-gray-900 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                 id="gender"
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
                 required
               >
-                <option value="">Select Gender</option>
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="other">Other</option>
+                <option value="" className="bg-gray-800">Select Gender</option>
+                <option value="female" className="bg-gray-800">Female</option>
+                <option value="male" className="bg-gray-800">Male</option>
+                <option value="other" className="bg-gray-800">Other</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="location">
+              <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="location">
                 Location *
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MapPinIcon className="h-5 w-5 text-gray-400" />
+                  <MapPinIcon className="h-5 w-5 text-gray-500" />
                 </div>
                 <select
-                  className="pl-10 w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  className="pl-10 w-full p-3 rounded-lg border border-gray-600 bg-gray-900 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                   id="location"
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
                   required
                 >
-                  <option value="">Select Location</option>
+                  <option value="" className="bg-gray-800">Select Location</option>
                   {zambianTowns.map((town, index) => (
-                    <option key={index} value={town}>{town}</option>
+                    <option key={index} value={town} className="bg-gray-800">{town}</option>
                   ))}
                 </select>
               </div>
@@ -252,7 +257,7 @@ const CustomerInfoForm = () => {
               type="submit"
               disabled={loading}
               className={`w-full py-3.5 rounded-lg font-semibold text-white transition-all flex items-center justify-center ${loading
-                ? 'bg-blue-400 cursor-not-allowed'
+                ? 'bg-blue-800 cursor-not-allowed'
                 : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-lg'
                 }`}
             >
@@ -276,7 +281,7 @@ const CustomerInfoForm = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="text-blue-200 text-sm mt-6 text-center max-w-md"
+        className="text-gray-400 text-sm mt-6 text-center max-w-md"
       >
         Your information is secure and will only be used to process your order and enhance your experience with us.
       </motion.p>

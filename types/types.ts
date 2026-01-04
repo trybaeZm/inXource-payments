@@ -22,6 +22,7 @@ export type companyInfoType = {
     name: string
     logo_url: string
     hasWallet: boolean
+    imageName: string
     business_name: string
 }
 export type payloadType = {

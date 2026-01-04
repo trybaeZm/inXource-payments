@@ -8,17 +8,19 @@ import type { companyInfoType } from '../../types/types';
 import { storeUserData } from '../../services/sessions';
 import { useParams, useRouter } from 'next/navigation';
 import { CompanyService } from '@/services/company';
+import { Building2 } from 'lucide-react';
 
 const PhoneVerification = () => {
   const router = useRouter();
   const { alias } = useParams<{ alias: string }>();
-
 
   const [companyInfo, setCompanyInfo] = useState<companyInfoType | null>(null);
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingCompany, setLoadingCompany] = useState(true);
   const [isActive] = useState<boolean | undefined>(true)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [imageLoading, setImageLoading] = useState(true)
 
   const companyService = new CompanyService()
 
@@ -29,9 +31,7 @@ const PhoneVerification = () => {
         throw new Error('Invalid decrypted token data');
       }
 
-
       const decodedStoreName = decodeURIComponent(alias);
-      // Second request: fetch company data
       const companyResponse = await companyService.getBusinessDetails(decodedStoreName)
 
       if (!companyResponse) {
@@ -49,8 +49,25 @@ const PhoneVerification = () => {
     }
   }, [alias]);
 
+
+  const getImages = async () => {
+    try {
+      setImageLoading(true)
+      const res = await companyService.getProductImages(companyInfo?.id, companyInfo?.imageName)
+      if (res && res.length > 0) {
+        setImageUrl(res)
+      }
+    } catch (err) {
+      console.error('Error loading business image:', err)
+    } finally {
+      setImageLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (alias) fetchCompanyInfo();
+
+    getImages()
   }, [alias, fetchCompanyInfo]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -89,15 +106,12 @@ const PhoneVerification = () => {
       console.log('User data:', data);
 
       if (data) {
-        // Existing customer - navigate to product selection
         storeUserData(data)
-
         const encodedData = encodeURIComponent(JSON.stringify(data));
         router.push(`/${alias}/product?data=${encodedData}`);
       } else {
-        // New customer - navigate to info collection
         router.push(
-          `/${alias}/info?phone=${encodeURIComponent(phone)}&business_id=${companyInfo.id}`
+          `/payment/${alias}/info?phone=${encodeURIComponent(phone)}&business_id=${companyInfo.id}`
         );
       }
     } catch (error) {
@@ -113,7 +127,6 @@ const PhoneVerification = () => {
     }
   };
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -137,7 +150,7 @@ const PhoneVerification = () => {
 
   if (loadingCompany) {
     return (
-      <div className="min-h-screen bg-gray-700 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
         <div className="flex flex-col items-center">
           <motion.div
             animate={{ rotate: 360 }}
@@ -151,23 +164,23 @@ const PhoneVerification = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-700 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
       <AnimatePresence>
         {!companyInfo ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-white/10 backdrop-blur-md rounded-xl p-8 max-w-md w-full text-center"
+            className="bg-gray-800/80 backdrop-blur-md rounded-xl p-8 max-w-md w-full text-center shadow-2xl border border-gray-700"
           >
             <BuildingStorefrontIcon className="w-16 h-16 text-white mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-white mb-4">Company Not Found</h2>
-            <p className="text-blue-100 mb-6">
+            <p className="text-gray-300 mb-6">
               We couldn't find the company information. Please check the link and try again.
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors shadow-md"
             >
               Try Again
             </button>
@@ -180,36 +193,39 @@ const PhoneVerification = () => {
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
-                  className="bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-md"
+                  className="bg-gray-800 rounded-2xl shadow-2xl overflow-hidden w-full max-w-md border border-gray-700"
                 >
                   {/* Header with company info */}
-                  <div className="bg-gray-600 p-6 text-center">
+                  <div className="bg-gradient-to-r from-gray-800 to-gray-700 p-6 text-center">
                     <motion.div variants={itemVariants} className="flex flex-col items-center">
-                      <div className="w-24 h-24 rounded-full border-4 border-white/30 bg-gray-700 backdrop-blur-sm flex items-center justify-center mb-4">
-                        <img
-                          src={companyInfo.logo_url || 'https://imageplaceholder.net/600x400/eeeeee/131313?text=Your+logo'}
-                          alt="Business Logo"
-                          className="w-20 h-20 rounded-full object-cover"
-                        />
+                      <div className="w-24 h-24 rounded-full border-4 border-white/20 bg-gray-900 flex items-center justify-center mb-4 shadow-lg">
+                        {imageUrl && !imageLoading ? (
+                          <div
+                            className="w-full h-full bg-cover bg-center rounded-xl"
+                            style={{ backgroundImage: `url(${imageUrl})` }}
+                          />
+                        ) : (
+                          <Building2 className="w-6 h-6 text-white" />
+                        )}
                       </div>
                       <h1 className="text-2xl font-bold text-white">{companyInfo.business_name}</h1>
-                      <p className="text-blue-100 mt-2">Welcome to our payment portal</p>
+                      <p className="text-gray-300 mt-2">Welcome to our payment portal</p>
                     </motion.div>
                   </div>
 
                   {/* Form section */}
                   <div className="p-6">
-                    <motion.h2 variants={itemVariants} className="text-xl font-semibold text-gray-800 mb-2 text-center">
+                    <motion.h2 variants={itemVariants} className="text-xl font-semibold text-white mb-2 text-center">
                       Enter Your Phone Number
                     </motion.h2>
 
-                    <motion.p variants={itemVariants} className="text-gray-600 text-center mb-6">
+                    <motion.p variants={itemVariants} className="text-gray-400 text-center mb-6">
                       We'll check if you've shopped with us before
                     </motion.p>
 
                     <form onSubmit={handleSubmit}>
                       <motion.div variants={itemVariants} className="mb-6">
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
                           Phone Number
                         </label>
                         <div className="relative">
@@ -224,10 +240,10 @@ const PhoneVerification = () => {
                             onChange={(e) => setPhone(e.target.value)}
                             placeholder="07XXXXXXXX or 09XXXXXXXX"
                             required
-                            className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            className="pl-10 w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-white placeholder-gray-400"
                           />
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-xs text-gray-400 mt-2">
                           Must start with 07 or 09 and be 10 digits long
                         </p>
                       </motion.div>
@@ -237,7 +253,7 @@ const PhoneVerification = () => {
                           type="submit"
                           disabled={loading}
                           className={`w-full py-3.5 rounded-lg font-semibold text-white transition-all flex items-center justify-center ${loading
-                            ? 'bg-blue-400 cursor-not-allowed'
+                            ? 'bg-blue-600 cursor-not-allowed'
                             : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-lg'
                             }`}
                         >
@@ -256,8 +272,8 @@ const PhoneVerification = () => {
                       </motion.div>
                     </form>
 
-                    <motion.div variants={itemVariants} className="mt-6 p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-700 text-center">
+                    <motion.div variants={itemVariants} className="mt-6 p-4 bg-blue-900/20 rounded-lg border border-blue-800/30">
+                      <p className="text-sm text-blue-200 text-center">
                         <strong>Why we ask for your phone number:</strong> We use it to find your existing account or create a new one for a faster checkout experience.
                       </p>
                     </motion.div>
@@ -268,11 +284,11 @@ const PhoneVerification = () => {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="bg-red-500/10 backdrop-blur-md rounded-xl p-8 max-w-md w-full text-center border border-red-400/30"
+                  className="bg-red-900/30 backdrop-blur-md rounded-xl p-8 max-w-md w-full text-center border border-red-700 shadow-xl"
                 >
                   <BuildingStorefrontIcon className="w-16 h-16 text-red-400 mx-auto mb-4" />
                   <h2 className="text-xl font-semibold text-white mb-4">Access Restricted</h2>
-                  <p className="text-blue-100 mb-6">
+                  <p className="text-gray-300 mb-6">
                     You don&apos;t have permission to access this business. Please contact the owner or administrator
                     if you believe this is a mistake.
                   </p>

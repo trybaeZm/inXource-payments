@@ -22,6 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Building2 } from 'lucide-react';
+import { CompanyService } from '@/services/company';
 
 // Cart component
 const CartSidebar = ({
@@ -150,7 +152,10 @@ const ProductSelectionForm = () => {
   const [selectedProduct, setSelectedProduct] = useState<companyProductsType | null>(null);
   const [productDetailOpen, setProductDetailOpen] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [imageLoading, setImageLoading] = useState(true)
   const promoService = new PromotionService()
+  const companyService = new CompanyService()
 
   const companyInfoString = sessionStorage.getItem('companyInfo');
   const company: companyInfoType = companyInfoString ? JSON.parse(companyInfoString) : null;
@@ -188,6 +193,7 @@ const ProductSelectionForm = () => {
 
   // Search functionality
   useEffect(() => {
+    getImages()
     if (searchTerm.trim() === '') {
       setFilteredProducts(companyProducts);
     } else {
@@ -317,6 +323,20 @@ const ProductSelectionForm = () => {
     setShowCheckout(true);
   };
 
+  const getImages = async () => {
+    try {
+      setImageLoading(true)
+      const res = await companyService.getProductImages(company?.id, company?.imageName)
+      if (res && res.length > 0) {
+        setImageUrl(res)
+      }
+    } catch (err) {
+      console.error('Error loading business image:', err)
+    } finally {
+      setImageLoading(false)
+    }
+  }
+
   const processCheckout = async (CheckoutData: CheckoutData) => {
     try {
       const response = await makeOrderByMainUser(cartItems, userData, company, CheckoutData)
@@ -375,6 +395,8 @@ const ProductSelectionForm = () => {
     const [promo, setPromo] = useState<Promotion | null>(null);
 
     useEffect(() => {
+
+
       const loadPromo = async () => {
         const p = await promoService.getActivePromotionForProduct(product.id);
         if (p) {
@@ -655,12 +677,14 @@ const ProductSelectionForm = () => {
           <div className="flex items-center justify-between h-16">
             {/* Logo and Company Info */}
             <div className="flex items-center gap-4">
-              {company && (
+              {imageUrl && !imageLoading ? (
                 <img
-                  src={company.logo_url || 'https://imageplaceholder.net/600x400/eeeeee/131313?text=Your+logo'}
+                  src={imageUrl}
                   alt="Business Logo"
                   className="h-10 w-10 rounded-full border-2 border-gray-600 object-cover"
                 />
+              ) : (
+                <Building2 className="w-6 h-6 text-white" />
               )}
               <div>
                 <h1 className="text-xl font-bold text-white">{company?.name || 'Store'}</h1>
