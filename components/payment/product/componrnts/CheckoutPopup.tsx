@@ -390,116 +390,126 @@ const CheckoutPopup = ({ isOpen, onClose, cartItems, onCheckout, company, update
                     <div className="backdrop-blur-xl fixed  top-0 left-0 right-0 bottom-0 bg-[#00000050] justify-center items-center flex flex-col p-0 z-[9999] ">
                         <div className="flex justify-center w-full gap-4 overflow-x-auto  px-2 py-2 flex-wrap">
                             <div className='sm:max-w-[600px] w-[100%] p-4 bg-white/95 dark:bg-gray-800/95 overflow-hidden rounded-2xl shadow-2xl'>
-                                {/* Close button */}
-                                <div className='flex justify-end'>
-                                    <button
-                                        onClick={() => onClose()}
-                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
-                                    >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className="w-4 h-4 text-gray-700 dark:text-gray-200"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                        >
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 
+                                {loading ? (
+                                    <div className="flex flex-col items-center justify-center min-h-[400px]">
+                                        <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
+                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Processing Transaction</h3>
+                                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Please wait while we complete your order...</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {/* Close button */}
+                                        <div className='flex justify-end'>
+                                            <button
+                                                onClick={() => onClose()}
+                                                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                                            >
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    className="w-4 h-4 text-gray-700 dark:text-gray-200"
+                                                    viewBox="0 0 20 20"
+                                                    fill="currentColor"
+                                                >
+                                                    <path
+                                                        fillRule="evenodd"
+                                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 
                 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 
                 1.414L10 11.414l-4.293 4.293a1 1 0 
                 01-1.414-1.414L8.586 10 4.293 5.707a1 1 
                 0 010-1.414z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                    </button>
-                                </div>
-                                {/* Header with Steps */}
-                                <DialogHeader className="p-6 border-b border-gray-200/50 dark:border-gray-700/50">
-                                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">
-                                        Checkout Process
-                                    </DialogTitle>
-
-                                    {/* Gauge Progress - No Labels */}
-                                    <div className="mt-4">
-                                        {/* Gauge Bar with Step Indicators */}
-                                        <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                            {/* Progress Fill */}
-                                            <div
-                                                className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-500 ease-out rounded-full"
-                                                style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
-                                            ></div>
-
-                                            {/* Step Dots */}
-                                            <div className="absolute inset-0 flex justify-between items-center">
-                                                {steps.map((step, index) => (
-                                                    <div
-                                                        key={step.number}
-                                                        className={`w-3 h-3 rounded-full border-2 transition-all duration-300 ${currentStep >= step.number
-                                                            ? 'bg-blue-500 border-blue-500 shadow-sm'
-                                                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
-                                                            }`}
-                                                    ></div>
-                                                ))}
-                                            </div>
+                                                        clipRule="evenodd"
+                                                    />
+                                                </svg>
+                                            </button>
                                         </div>
-                                    </div>
-                                </DialogHeader>
+                                        {/* Header with Steps */}
+                                        <DialogHeader className="p-6 border-b border-gray-200/50 dark:border-gray-700/50">
+                                            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">
+                                                Checkout Process
+                                            </DialogTitle>
 
-                                {/* Content */}
-                                <div className="p-6">
-                                    {renderStepContent()}
-                                </div>
+                                            {/* Gauge Progress - No Labels */}
+                                            <div className="mt-4">
+                                                {/* Gauge Bar with Step Indicators */}
+                                                <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                                    {/* Progress Fill */}
+                                                    <div
+                                                        className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-500 ease-out rounded-full"
+                                                        style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+                                                    ></div>
 
-                                {/* Footer with Navigation */}
-                                <div className="flex gap-3 p-6 border-t border-gray-200/50 dark:border-gray-700/50">
-                                    {currentStep > 1 && currentStep < 4 && (
-                                        <button
-                                            onClick={() => setCurrentStep(currentStep - 1)}
-                                            disabled={loading}
-                                            className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 disabled:opacity-50"
-                                        >
-                                            <ArrowLeft className="w-4 h-4 inline mr-2" />
-                                            Back
-                                        </button>
-                                    )}
+                                                    {/* Step Dots */}
+                                                    <div className="absolute inset-0 flex justify-between items-center">
+                                                        {steps.map((step, index) => (
+                                                            <div
+                                                                key={step.number}
+                                                                className={`w-3 h-3 rounded-full border-2 transition-all duration-300 ${currentStep >= step.number
+                                                                    ? 'bg-blue-500 border-blue-500 shadow-sm'
+                                                                    : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
+                                                                    }`}
+                                                            ></div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </DialogHeader>
 
-                                    {currentStep < 3 ? (
-                                        <button
-                                            disabled={optionaDataProductSelected != null}
-                                            onClick={() => setCurrentStep(currentStep + 1)}
-                                            className="flex-1 px-5 py-3 rounded-xl font-semibold text-white 
+                                        {/* Content */}
+                                        <div className="p-6">
+                                            {renderStepContent()}
+                                        </div>
+
+                                        {/* Footer with Navigation */}
+                                        <div className="flex gap-3 p-6 border-t border-gray-200/50 dark:border-gray-700/50">
+                                            {currentStep > 1 && currentStep < 4 && (
+                                                <button
+                                                    onClick={() => setCurrentStep(currentStep - 1)}
+                                                    disabled={loading}
+                                                    className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 disabled:opacity-50"
+                                                >
+                                                    <ArrowLeft className="w-4 h-4 inline mr-2" />
+                                                    Back
+                                                </button>
+                                            )}
+
+                                            {currentStep < 3 ? (
+                                                <button
+                                                    disabled={optionaDataProductSelected != null}
+                                                    onClick={() => setCurrentStep(currentStep + 1)}
+                                                    className="flex-1 px-5 py-3 rounded-xl font-semibold text-white 
               bg-gradient-to-r from-blue-500 to-purple-500 
               shadow-lg transition-all duration-300 transform
               hover:from-blue-600 hover:to-purple-600 hover:scale-105
               disabled:opacity-50 disabled:cursor-not-allowed 
               disabled:hover:from-blue-500 disabled:hover:to-purple-500 disabled:hover:scale-100"
-                                        >
-                                            Continue
-                                            <ArrowRight className="w-4 h-4 inline ml-2" />
-                                        </button>
-                                    ) : currentStep === 3 ? (
-                                        <button
-                                            onClick={handleSubmit}
-                                            disabled={loading}
-                                            className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl font-semibold hover:from-green-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:scale-100 shadow-lg"
-                                        >
-                                            {loading ? (
-                                                <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                                                >
+                                                    Continue
+                                                    <ArrowRight className="w-4 h-4 inline ml-2" />
+                                                </button>
+                                            ) : currentStep === 3 ? (
+                                                <button
+                                                    onClick={handleSubmit}
+                                                    disabled={loading}
+                                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl font-semibold hover:from-green-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:scale-100 shadow-lg"
+                                                >
+                                                    {loading ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                                                    ) : (
+                                                        <CreditCard className="w-4 h-4 inline mr-2" />
+                                                    )}
+                                                    {loading ? 'Processing...' : 'Complete Payment'}
+                                                </button>
                                             ) : (
-                                                <CreditCard className="w-4 h-4 inline mr-2" />
+                                                <button
+                                                    onClick={resetForm}
+                                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                                                >
+                                                    Done
+                                                </button>
                                             )}
-                                            {loading ? 'Processing...' : 'Complete Payment'}
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={resetForm}
-                                            className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
-                                        >
-                                            Done
-                                        </button>
-                                    )}
-                                </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             {optionaDataProductSelected && (

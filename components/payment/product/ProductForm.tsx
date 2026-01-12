@@ -12,7 +12,7 @@ import {
 import Swal from 'sweetalert2';
 import PaymentService from '../../../api/payment';
 import type { companyProductsType, CartItem, companyInfoType, CheckoutData, Promotion } from '../../../types/types';
-import { createOrderNotification, makeOrderByMainUser } from '../../../services/order';
+import { createOrderNotification, makeOrderByMainUser, updateOrderToken } from '../../../services/order';
 import { getUserData } from '../../../services/sessions';
 import CheckoutPopup from './componrnts/CheckoutPopup';
 import { PromotionService } from '../../../services/promotion';
@@ -345,6 +345,8 @@ const ProductSelectionForm = () => {
 
         if (company.hasWallet) {
           const responsefromtoken = await PaymentService.createTransaction(response.id)
+          await updateOrderToken(response?.id, responsefromtoken?.data?.data.token)
+
           if (responsefromtoken.data) {
             await createOrderNotification({
               userId: userData.id,
@@ -353,6 +355,8 @@ const ProductSelectionForm = () => {
               products: cartItems,
               orderedAt: new Date().toISOString()
             });
+
+
             PaymentService.redirectToPayment(responsefromtoken.data.data.paymentLink)
           }
         } else {

@@ -1,6 +1,6 @@
 import { supabase } from "../services/supabaseClient";
 import Swal from "sweetalert2";
-import type { companyInfoType, CustomerType,  payloadType, PaymentStatusData, ResponseFromPayApi, selectedImagesType } from "../types/types";
+import type { companyInfoType, CustomerType, payloadType, PaymentStatusData, ResponseFromPayApi, selectedImagesType } from "../types/types";
 import axios from "axios";
 
 const paymentUrl = "https://paymentbackend.inxource.com/api/payment";
@@ -221,7 +221,7 @@ class Payment {
       const { data, error } = await supabase
         .from('orders')
         .update({ order_payment_status: 'completed' })
-        .eq('transaction_id', orderToken)
+        .eq('orderToken', orderToken)
         .select();
 
       console.log("Update response:", { data, error });
@@ -256,7 +256,7 @@ class Payment {
         .select("*")
         .eq("id", id)
         .single()
-        
+
       if (data) {
         console.log("Purchase can proceed");
         const apiUrl = paymentUrl + "/getToken";
@@ -294,7 +294,7 @@ class Payment {
     }
   }
 
-  async processPayment({ payload, selectedImages, businessData }: { payload: payloadType, selectedImages: selectedImagesType[], businessData:  companyInfoType}) {
+  async processPayment({ payload, selectedImages, businessData }: { payload: payloadType, selectedImages: selectedImagesType[], businessData: companyInfoType }) {
 
 
     const orderResponse = await this.saveOrder({ payload, selectedImages, hasWallet: businessData.hasWallet })

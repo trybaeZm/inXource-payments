@@ -8,6 +8,27 @@ export const makeOrder = async () => {
 
 }
 
+export const updateOrderToken = async (orderID?: string, token?: string) => {
+    try {
+        const { data, error } = await supabase
+            .from('orders')
+            .update({ orderToken: token })
+            .eq('id', orderID)
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Error updating order:", error.message);
+            return null;
+        }
+        console.log("order: ", data)
+        return data;
+    } catch (err) {
+        console.error("Unexpected error updating order:", err);
+        return null;
+    }
+}
+
 
 // Create a new order
 export async function createOrder(newData: Partial<Order>): Promise<Order | null> {
@@ -125,34 +146,42 @@ interface OrderNotificationParams {
 export async function createOrderNotification(params: OrderNotificationParams) {
     const { userId, businessId, orderId, products, orderedAt } = params;
 
-    // Extract product names
-    const productNames = products.map((p) => p.name);
+    // 1. Improved Product Summary Logic
+    const totalItems = products.reduce((sum, item) => sum + item.quantity, 0);
+    const primaryProduct = products[0].name;
+    const otherItemsCount = totalItems - products[0].quantity;
 
-    // Calculate total cost
+    // 2. Human-Centric Message Construction
+    // Example: "You've received a new order for 'Blue Widget' and 3 other items. Total: ZMW 450.00"
+    let itemSummary = `${products[0].quantity}x ${primaryProduct}`;
+    if (products.length > 1 || otherItemsCount > 0) {
+        const additionalCount = products.length - 1;
+        itemSummary += ` and ${additionalCount} other item${additionalCount > 1 ? 's' : ''}`;
+    }
+
     const totalAmount = products.reduce(
         (sum, item) => sum + item.price * item.quantity,
         0
     );
 
-    const message = `A new order (#${orderId}) was placed containing: ${productNames.join(
-        ", "
-    )}. Total cost: $${totalAmount}. Date: ${new Date(
+    // Focus on the action and the value, removing brackets and raw IDs
+    const message = `A new order has been placed for ${itemSummary}. Total value: ZMW ${totalAmount.toLocaleString()}. Received on ${new Date(
         orderedAt
-    ).toLocaleDateString()}.`;
+    ).toLocaleDateString(undefined, { dateStyle: 'medium' })}.`;
 
     const { data, error } = await supabase.from("notifications").insert({
         user_id: userId,
         business_id: businessId,
-        title: "New Order Placed",
+        title: "New Order Received", // Changed from "Placed" to "Received" for a business context
         message: message,
         notification_type: "order",
         priority: "normal",
         status: "unread",
         category: "order",
         action_url: `/orders/${orderId}`,
-        action_label: "View Order",
+        action_label: "View Order Details",
         metadata: {
-            orderId,
+            orderId, // We keep the ID here for the system to use when clicking the notification
             totalAmount,
             items: products.map((item) => ({
                 id: item.id,

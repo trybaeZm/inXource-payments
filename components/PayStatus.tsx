@@ -39,8 +39,6 @@ const PayStatus: React.FC = () => {
 
       setPaymentDetails(data.data?.payload);
 
-      const statusCode = data.data?.paymentStatus?.responsecode;
-
       console.log("Payment status code:", apistatus);
 
       if (apistatus == 'PENDING') {
@@ -53,7 +51,8 @@ const PayStatus: React.FC = () => {
           setErrorMessage("Payment verification timed out. Please contact support.");
         }
       } else if (apistatus == 'COMPLETE') {
-        PaymentService.updateSaveStatus(invoiceId)
+        console.log("Payment completed successfully");
+        PaymentService.updateSaveStatus(token)
           .then((res) => {
             setStatus("success");
             setTimeout(() => router.push("/"), 5000);
@@ -61,7 +60,7 @@ const PayStatus: React.FC = () => {
             console.error("Error updating save status:", err);
             setStatus("failed");
             setErrorMessage("Failed to update order status. Please contact support.");
-          }); 
+          });
       } else {
         setStatus("failed");
         setErrorMessage(data.data?.paymentStatus?.responsemessage || "Payment failed");
@@ -122,10 +121,10 @@ const PayStatus: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
           onClick={() => router.push("/")}
-          className="flex items-center text-gray-300 mb-6 hover:text-gray-200  transition-colors"
+          className="flex items-center text-gray-100 mb-6 hover:text-white transition-colors"
         >
           <ArrowLeft size={18} className="mr-2" />
-          Back to Home
+          <span className="font-medium">Back to Home</span>
         </motion.button>
 
         {/* Main card */}
@@ -133,10 +132,11 @@ const PayStatus: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-gray-200 rounded-2xl shadow-lg overflow-hidden"
+          className="bg-white rounded-2xl shadow-2xl overflow-hidden"
         >
           {/* Status header */}
-          <div className={`bg-${statusConfig.color}-50 py-8 px-6 flex flex-col items-center`}>
+          {/* Changed bg opacity and increased text contrast */}
+          <div className={`bg-${statusConfig.color}-100 py-10 px-6 flex flex-col items-center`}>
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -159,7 +159,7 @@ const PayStatus: React.FC = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className={`text-2xl font-bold text-${statusConfig.color}-800 text-center mb-2`}
+              className={`text-2xl font-black text-${statusConfig.color}-900 text-center mb-2`}
             >
               {statusConfig.title}
             </motion.h2>
@@ -168,14 +168,14 @@ const PayStatus: React.FC = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className={`text-${statusConfig.color}-600 text-center`}
+              className={`text-${statusConfig.color}-800 font-medium text-center`}
             >
               {statusConfig.description}
             </motion.p>
           </div>
 
           {/* Payment details */}
-          <div className="p-6">
+          <div className="p-6 bg-white">
             {paymentDetails && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -183,22 +183,22 @@ const PayStatus: React.FC = () => {
                 transition={{ duration: 0.5, delay: 0.6 }}
                 className="mb-6"
               >
-                <h3 className="font-medium text-slate-700 mb-3">Payment Details</h3>
-                <div className="space-y-2 text-sm">
+                <h3 className="font-bold text-gray-900 mb-3 border-b pb-2">Payment Details</h3>
+                <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Reference ID:</span>
-                    <span className="font-medium">{id}</span>
+                    <span className="text-gray-600 font-medium">Reference ID:</span>
+                    <span className="font-bold text-gray-900">{id}</span>
                   </div>
                   {paymentDetails.amount && (
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Amount:</span>
-                      <span className="font-medium">ZMW {paymentDetails.amount}</span>
+                      <span className="text-gray-600 font-medium">Amount:</span>
+                      <span className="font-bold text-gray-900">ZMW {paymentDetails.amount}</span>
                     </div>
                   )}
                   {paymentDetails.paymentMethod && (
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Method:</span>
-                      <span className="font-medium">{paymentDetails.paymentMethod}</span>
+                      <span className="text-gray-600 font-medium">Method:</span>
+                      <span className="font-bold text-gray-900">{paymentDetails.paymentMethod}</span>
                     </div>
                   )}
                 </div>
@@ -214,17 +214,17 @@ const PayStatus: React.FC = () => {
                 className="mb-6"
               >
                 <div className="flex items-center mb-2">
-                  <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: "0%" }}
                       animate={{ width: "60%" }}
                       transition={{ duration: 1, repeat: Infinity, repeatType: "reverse" }}
-                      className="h-full bg-yellow-500 rounded-full"
+                      className="h-full bg-yellow-600 rounded-full"
                     />
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 text-center">
-                  Checking payment status ({retries.current}/{maxRetries})
+                <p className="text-sm font-semibold text-gray-700 text-center">
+                  Checking status ({retries.current}/{maxRetries})
                 </p>
               </motion.div>
             )}
@@ -237,9 +237,9 @@ const PayStatus: React.FC = () => {
                 transition={{ duration: 0.5, delay: 0.7 }}
                 className="mb-6"
               >
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-green-700 text-sm text-center">
-                    You will be redirected to the home page in 5 seconds
+                <div className="bg-green-100 border-2 border-green-200 rounded-xl p-4">
+                  <p className="text-green-900 font-bold text-sm text-center">
+                    Redirecting to home in 5 seconds...
                   </p>
                 </div>
               </motion.div>
@@ -253,34 +253,25 @@ const PayStatus: React.FC = () => {
               className="flex flex-col gap-3"
             >
               {status === "success" && (
-                <>
-                  {/* <button
-                    onClick={() => navigation("/orders")}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
-                  >
-                    <CreditCard size={18} className="mr-2" />
-                    View My Orders
-                  </button> */}
-                  <button
-                    onClick={() => router.push("/")}
-                    className="w-full border border-slate-300 hover:bg-slate-50 text-slate-700 py-3 rounded-lg font-medium transition-colors"
-                  >
-                    Continue Shopping
-                  </button>
-                </>
+                <button
+                  onClick={() => router.push("/")}
+                  className="w-full bg-green-700 hover:bg-green-800 text-white py-4 rounded-xl font-bold transition-all shadow-md active:scale-[0.98]"
+                >
+                  Continue Shopping
+                </button>
               )}
 
               {status === "failed" && (
                 <>
                   <button
                     onClick={() => fetchPaymentStatus()}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+                    className="w-full bg-red-700 hover:bg-red-800 text-white py-4 rounded-xl font-bold transition-all shadow-md flex items-center justify-center"
                   >
                     <CreditCard size={18} className="mr-2" />
                     Try Payment Again
                   </button>
                   <button
-                    className="w-full border border-slate-300 hover:bg-slate-50 text-slate-700 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+                    className="w-full border-2 border-gray-300 hover:bg-gray-50 text-gray-800 py-4 rounded-xl font-bold transition-all flex items-center justify-center"
                   >
                     <AlertCircle size={18} className="mr-2" />
                     Contact Support
@@ -291,7 +282,7 @@ const PayStatus: React.FC = () => {
               {status === "pending" && (
                 <button
                   onClick={() => router.push("/")}
-                  className="w-full border border-slate-300 hover:bg-slate-50 text-slate-700 py-3 rounded-lg font-medium transition-colors"
+                  className="w-full border-2 border-gray-300 hover:bg-gray-50 text-gray-800 py-4 rounded-xl font-bold transition-all"
                 >
                   Go to Homepage
                 </button>
@@ -305,9 +296,11 @@ const PayStatus: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 1 }}
-          className="mt-6 text-center text-gray-300 text-sm"
+          className="mt-8 text-center"
         >
-          <p>Need help? <a href="#" className="text-blue-600 hover:underline">Contact our support team</a></p>
+          <p className="text-gray-100 font-medium">
+            Need help? <a href="#" className="text-blue-300 hover:text-blue-200 underline decoration-2 underline-offset-4">Contact support</a>
+          </p>
         </motion.div>
       </div>
     </div>

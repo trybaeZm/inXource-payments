@@ -3,12 +3,13 @@ import { supabase } from "./supabaseClient"
 
 export class CompanyService {
     getBusinessDetails = async (name: string): Promise<companyInfoType | null> => {
-        console.log("getting store data for: ", name)
+        const cleanedName = name.trim();
+        console.log("getting store data for: ", cleanedName)
         try {
             const { data, error } = await supabase
                 .from("businesses")
                 .select("*")
-                .eq("business_name", name)
+                .ilike("business_name", cleanedName)
                 .single()
 
             if (error) {

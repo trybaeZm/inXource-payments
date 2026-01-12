@@ -49,26 +49,34 @@ const PhoneVerification = () => {
     }
   }, [alias]);
 
-
-  const getImages = async () => {
+  const getImages = useCallback(async (id: string, name: string) => {
     try {
-      setImageLoading(true)
-      const res = await companyService.getProductImages(companyInfo?.id, companyInfo?.imageName)
+      setImageLoading(true);
+      const res = await companyService.getProductImages(id, name);
       if (res && res.length > 0) {
-        setImageUrl(res)
+        setImageUrl(res);
       }
     } catch (err) {
-      console.error('Error loading business image:', err)
+      console.error('Error loading business image:', err);
     } finally {
-      setImageLoading(false)
+      setImageLoading(false);
     }
-  }
+  }, []);
+
+
 
   useEffect(() => {
-    if (alias) fetchCompanyInfo();
-
-    getImages()
+    if (alias) {
+      fetchCompanyInfo();
+    }
   }, [alias, fetchCompanyInfo]);
+
+  // Only fetch images once companyInfo is available
+  useEffect(() => {
+    if (companyInfo?.id && companyInfo?.imageName) {
+      getImages(companyInfo.id, companyInfo.imageName);
+    }
+  }, [companyInfo, getImages]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
