@@ -53,30 +53,41 @@ export async function createOrder(newData: Partial<Order>): Promise<Order | null
 
 
 
-export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, business: companyInfoType, CheckoutData: CheckoutData) => {
+export const makeOrderByMainUser = async (cartItems: CartItem[], user: userTypes, business: companyInfoType, checkoutData: CheckoutData) => {
     const userData = await getCustomersById(user.id)
-    const userID = userData.id
 
-    let totalamount = 0
-    let partialAmountTotal = 0
-    const products = []
-
-    for (let i = 0; i < Payload.length; i++) {
-        products.push({ product_id: Payload[i].id, quantity: Payload[i].quantity, description: Payload[i].description, specialInstructions: Payload[i].specialInstructions })
-
-        totalamount += (Payload[i].price * Payload[i].quantity)
-        partialAmountTotal += (Payload[i].partialPayment * Payload[i].quantity)
+    if (!userData) {
+        console.error("User not found or error fetching user data");
+        return false;
     }
 
-    console.log(totalamount, products)
+    const userID = userData.id
+
+    let totalAmount = 0
+    let partialAmountTotal = 0
+
+    // Calculate totals and format products
+    const products = cartItems.map(item => {
+        totalAmount += (item.price * item.quantity);
+        partialAmountTotal += (item.partialPayment * item.quantity);
+
+        return {
+            product_id: item.id,
+            quantity: item.quantity,
+            description: item.description,
+            specialInstructions: item.specialInstructions
+        };
+    });
+
+    console.log(totalAmount, products)
 
     const newOrder = {
         business_id: business.id,
         customer_id: userID,
-        total_amount: totalamount,
-        delivery_location: CheckoutData.specialInstructions,
+        total_amount: totalAmount,
+        delivery_location: checkoutData.specialInstructions,
         order_status: "pending",
-        sammarized_notes: CheckoutData.description,
+        sammarized_notes: checkoutData.description,
         order_payment_status: business?.hasWallet ? "pending" : "completed",
         products: products,
         partialAmountTotal: business?.hasWallet ? partialAmountTotal : 0
@@ -84,54 +95,62 @@ export const makeOrderByMainUser = async (Payload: CartItem[], user: userTypes, 
 
     const orderCreateResponse = await createOrder(newOrder)
 
-    if (orderCreateResponse) {
-        // return orderCreateResponse
-        try {
-            //upload image for the order
-            if (CheckoutData.image) {
-                const { data, error } = await supabase.storage
+    if (!orderCreateResponse) {
+        return false
+    }
+
+    try {
+        const uploadPromises: Promise<any>[] = [];
+
+        // Upload main order image if exists
+        if (checkoutData.image) {
+            const mainImageUpload = supabase.storage
+                .from('uploaded-files')
+                .upload(
+                    `orders/${orderCreateResponse.id}/${checkoutData.image.name}`,
+                    checkoutData.image
+                )
+                .then(({ data, error }) => {
+                    if (error) console.error("Error uploading main image:", error);
+                    else console.log("Main image uploaded:", data);
+                });
+
+            uploadPromises.push(mainImageUpload);
+        } else {
+            console.log('No main image to upload');
+        }
+
+        // Upload product images
+        const productImageUploads = cartItems.map(product => {
+            const image = product.images; // optional File | null
+            if (image) {
+                console.log("Uploading image for product:", product.id);
+                return supabase.storage
                     .from('uploaded-files')
                     .upload(
-                        `orders/${orderCreateResponse.id}/${CheckoutData.image.name}`,
-                        CheckoutData.image
+                        `orders/${orderCreateResponse.id}/products/${product.id}/${image.name}`,
+                        image
                     )
-
-                if (data) {
-                    console.log(data)
-                    return orderCreateResponse
-                }
-                if (error) {
-                    console.log(error)
-                }
-            } else {
-                console.log('No image to upload')
+                    .then(({ data, error }) => {
+                        if (error) console.error(`Failed to upload image for product ${product.id}:`, error);
+                        else console.log(`Image uploaded for product ${product.id}:`, data);
+                    });
             }
-            for (const product of Payload) {
-                const Image = product.images; // optional File | null
-                console.log("Uploading image:", Image);
+            return Promise.resolve();
+        });
 
-                if (Image) {
-                    const { data, error } = await supabase.storage
-                        .from('uploaded-files')
-                        .upload(
-                            `orders/${orderCreateResponse.id}/products/${product.id}/${Image.name}`,
-                            Image
-                        );
+        uploadPromises.push(...productImageUploads);
 
-                    if (error) {
-                        console.error("Failed to upload image:", error);
-                    } else {
-                        console.log("Image uploaded successfully:", data);
-                    }
-                }
-            }
+        // Wait for all uploads to complete
+        await Promise.all(uploadPromises);
 
-            return orderCreateResponse
-        } catch (error) {
-            console.log(error)
-        }
-    } else {
-        return false
+        return orderCreateResponse
+
+    } catch (error) {
+        console.error("Error in post-order processing:", error)
+        // Check if we should return the order even if uploads fail. 
+        // usually yes, as the order itself is created.
+        return orderCreateResponse
     }
 }
 
