@@ -118,7 +118,7 @@ const CheckoutPopup = ({ isOpen, onClose, cartItems, onCheckout, company, update
             }
 
             await onCheckout(checkoutData)
-            setCurrentStep(4) // Success step
+            setCurrentStep(3) // Success step
         } catch (error) {
             console.error('Checkout failed:', error)
         } finally {
@@ -137,9 +137,8 @@ const CheckoutPopup = ({ isOpen, onClose, cartItems, onCheckout, company, update
 
     const steps = [
         { number: 1, title: 'Order Summary', icon: <ShoppingCart className="w-4 h-4" /> },
-        { number: 2, title: 'Add Details', icon: <FileText className="w-4 h-4" /> },
-        { number: 3, title: 'Payment', icon: <CreditCard className="w-4 h-4" /> },
-        { number: 4, title: 'Complete', icon: <CheckCircle2 className="w-4 h-4" /> }
+        { number: 2, title: 'Payment', icon: <CreditCard className="w-4 h-4" /> },
+        { number: 3, title: 'Complete', icon: <CheckCircle2 className="w-4 h-4" /> }
     ]
 
     const renderStepContent = () => {
@@ -224,82 +223,6 @@ const CheckoutPopup = ({ isOpen, onClose, cartItems, onCheckout, company, update
             case 2:
                 return (
                     <div className="space-y-6">
-                        {/* Description */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Order Description (Optional)
-                            </label>
-                            <textarea
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Add a description for this order..."
-                                rows={3}
-                                className="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                            />
-                        </div>
-
-                        {/* Special Instructions */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Special Instructions (Optional — e.g., delivery location)
-                            </label>
-                            <textarea
-                                value={specialInstructions}
-                                onChange={(e) => setSpecialInstructions(e.target.value)}
-                                placeholder="Any special instructions for this order..."
-                                rows={2}
-                                className="w-full px-3 py-2 bg-white/50 dark:bg-gray-700/50 border border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                            />
-                        </div>
-
-                        {/* Image Upload */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Attach Image (Optional)
-                            </label>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleImageSelect}
-                                accept="image/*"
-                                className="hidden"
-                            />
-
-                            {imagePreview ? (
-                                <div className="relative">
-                                    <img
-                                        src={imagePreview}
-                                        alt="Preview"
-                                        className="w-full h-48 object-cover rounded-xl border-2 border-green-200 dark:border-green-800"
-                                    />
-                                    <button
-                                        onClick={removeImage}
-                                        className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
-                                >
-                                    <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                                    <p className="text-gray-600 dark:text-gray-400 font-medium">
-                                        Click to upload an image
-                                    </p>
-                                    <p className="text-gray-500 dark:text-gray-500 text-sm mt-1">
-                                        PNG, JPG up to 5MB
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )
-
-            case 3:
-                return (
-                    <div className="space-y-6">
                         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
                             <h3 className="font-semibold text-blue-900 dark:text-blue-400 mb-2">
                                 Payment Summary
@@ -347,7 +270,7 @@ const CheckoutPopup = ({ isOpen, onClose, cartItems, onCheckout, company, update
                     </div>
                 )
 
-            case 4:
+            case 3:
                 return (
                     <div className="text-center space-y-6">
                         <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -461,7 +384,7 @@ const CheckoutPopup = ({ isOpen, onClose, cartItems, onCheckout, company, update
 
                                         {/* Footer with Navigation */}
                                         <div className="flex gap-3 p-6 border-t border-gray-200/50 dark:border-gray-700/50">
-                                            {currentStep > 1 && currentStep < 4 && (
+                                            {currentStep > 1 && currentStep < 3 && (
                                                 <button
                                                     onClick={() => setCurrentStep(currentStep - 1)}
                                                     disabled={loading}
@@ -472,7 +395,7 @@ const CheckoutPopup = ({ isOpen, onClose, cartItems, onCheckout, company, update
                                                 </button>
                                             )}
 
-                                            {currentStep < 3 ? (
+                                            {currentStep < 2 ? (
                                                 <button
                                                     disabled={optionaDataProductSelected != null}
                                                     onClick={() => setCurrentStep(currentStep + 1)}
@@ -486,7 +409,7 @@ const CheckoutPopup = ({ isOpen, onClose, cartItems, onCheckout, company, update
                                                     Continue
                                                     <ArrowRight className="w-4 h-4 inline ml-2" />
                                                 </button>
-                                            ) : currentStep === 3 ? (
+                                            ) : currentStep === 2 ? (
                                                 <button
                                                     onClick={handleSubmit}
                                                     disabled={loading}
