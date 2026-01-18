@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# inXource Payments
 
-## Getting Started
+A modern, secure, and seamless payment processing application built with Next.js 15, TypeScript, and Supabase. Designed for performance and scalability, featuring a responsive UI and robust backend integration.
 
-First, run the development server:
+## 🚀 Features
+
+-   **Order Management**: Complete flow from product selection to checkout and order confirmation.
+-   **Product Catalog**: Dynamic product display with image support and customization options.
+-   **Secure Payments**: Integrated payment processing supporting multiple methods (Mobile Money, Cash).
+-   **Customer & Session Handling**: specialized services for managing customer data and user sessions.
+-   **Promotions & Subscriptions**: Built-in support for applying promotions and managing subscription-based services.
+-   **Responsive Design**: Mobile-first UI built with Tailwind CSS and Framer Motion for smooth animations.
+-   **Real-time Backend**: Powered by Supabase for real-time data fetching and storage.
+
+## 🛠️ Tech Stack
+
+-   **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+-   **Language**: [TypeScript](https://www.typescriptlang.org/)
+-   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+-   **Backend / Database**: [Supabase](https://supabase.com/)
+-   **Icons**: [Lucide React](https://lucide.dev/)
+-   **Animations**: [Framer Motion](https://www.framer.com/motion/)
+-   **HTTP Client**: [Axios](https://axios-http.com/)
+-   **State/Popups**: [SweetAlert2](https://sweetalert2.github.io/)
+-   **Deployment**: GitHub Actions, Docker/PM2 on VPS
+
+## 📂 Project Structure
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+├── app/                # Next.js App Router pages and layouts
+├── components/         # Reusable UI components
+│   ├── payment/        # Payment-specific components (CheckoutPopup, ProductForm)
+│   └── ui/             # Generic UI elements
+├── services/           # Business logic and API calls
+│   ├── company.ts      # Company & Product data fetching
+│   ├── order.ts        # Order processing logic
+│   ├── customer.ts     # Customer management
+│   └── supabaseClient.ts # Supabase client initialization
+├── types/              # TypeScript type definitions
+└── public/             # Static assets
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ⚡ Getting Started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+-   Node.js (v18+ recommended)
+-   pnpm (Package Manager)
 
-## Learn More
+### Installation
 
-To learn more about Next.js, take a look at the following resources:
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/yourusername/inXource-payments.git
+    cd inXource-payments
+    ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2.  **Install dependencies:**
+    ```bash
+    pnpm install
+    ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3.  **Run the development server:**
+    ```bash
+    pnpm dev
+    ```
 
-## Deploy on Vercel
+4.  **Open the app:**
+    Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚀 Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project includes a fully automated CI/CD pipeline for deploying to a VPS.
+
+### VPS Requirements
+-   Ubuntu (or compatible Linux distro)
+-   Node.js & pnpm installed globally
+-   **PM2** for process management
+-   **Nginx** (acting as a reverse proxy)
+
+### GitHub Actions Workflow
+The `.github/workflows/deploy.yml` file handles the deployment:
+1.  **Trigger**: Pushes to `main`.
+2.  **Steps**:
+    -   Connects via SSH.
+    -   Pulls the latest code.
+    -   Installs dependencies (including `devDependencies` for Tailwind).
+    -   Builds the application (`pnpm run build`).
+    -   Restarts the server using PM2.
+
+### Secrets Configuration
+To enable deployment, set the following **GitHub Secrets**:
+-   `REMOTE_HOST`: VPS IP Address
+-   `REMOTE_USER`: SSH Username (e.g., `root`)
+-   `SSH_PRIVATE_KEY`: Private SSH Key content
+
+## 📜 Scripts
+
+-   `pnpm dev`: Start development server.
+-   `pnpm build`: Build the application for production.
+-   `pnpm start`: Start the production server.
+-   `pnpm lint`: Run ESLint.

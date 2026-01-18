@@ -14,21 +14,24 @@ jobs:
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.c }}
           script: |
-            # 1. Navigate to project folder on VPS
+            # 1. Stop script on first error
+            set -e
+
+            # 2. Navigate to project folder on VPS
             # Ensure this directory exists on your server or update the path
             cd /root/inXource-payments
             
-            # 2. Pull latest code
+            # 3. Pull latest code
             git fetch origin main
             git reset --hard origin/main
             
-            # 3. Load Node/NVM environment
+            # 4. Load Node/NVM environment
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
-            # 4. Install Dependencies and Build
+            # 5. Install Dependencies and Build
             # Set memory limit to avoid OOM
             export NODE_OPTIONS="--max-old-space-size=4096"
             
@@ -37,10 +40,11 @@ jobs:
                 npm install -g pnpm
             fi
             
-            pnpm install --frozen-lockfile
+            # Install ALL dependencies (including devDeps for Tailwind) even if NODE_ENV=production
+            pnpm install --frozen-lockfile --prod=false
             pnpm run build
             
-            # 5. Restart Application
+            # 6. Restart Application
             # Using 'inXource-payment' as the app name (matches package.json)
             # If the app is not running yet, execute this once on the server:
             # pm2 start pnpm --name "inXource-payment" -- start
